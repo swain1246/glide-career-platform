@@ -10,6 +10,7 @@ import { students } from "@/data/students";
 import { SkillTag } from "@/components/SkillTag";
 import { InvitationModal } from "@/components/InvitationModal";
 import { AnalyticsWidget } from "@/components/AnalyticsWidget";
+import { SidebarLayout } from "@/layouts/SidebarLayout";
 
 export default function MentorDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -101,6 +102,12 @@ const matchesCollege =
   };
 
   return (
+    <SidebarLayout 
+      userRole="mentor" 
+      userName={localStorage.getItem("userName")}
+      userAvatar={null}
+      notificationCount={10}
+    >
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto p-6 space-y-6">
         {/* Header */}
@@ -316,5 +323,6 @@ const matchesCollege =
         />
       </div>
     </div>
+    </SidebarLayout>
   );
 }
