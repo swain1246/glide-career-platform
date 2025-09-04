@@ -34,6 +34,7 @@ import { applications } from "../../data/applications";
 import { mentorInvites } from "../../data/mentors";
 import { notifications } from "../../data/notifications";
 import { getStudentDashboardData } from "@/api/studentServices";
+import { useUser } from "@/contexts/UserContext";
 
 // Define interfaces for the API response
 interface QuickStats {
@@ -73,6 +74,7 @@ interface DashboardData {
 
 const StudentDashboard = () => {
   // Mock current user - in real app this would come from auth context
+  const {user} = useUser()
   const currentStudent = students[0]; // Alex Chen
   const userApplications = applications.filter(
     (app) => app.studentId === currentStudent.id
@@ -223,7 +225,7 @@ const StudentDashboard = () => {
         {/* Welcome Section */}
         <div className="space-y-2">
           <h1 className="text-3xl font-bold">
-            Welcome back, {localStorage.getItem("userName").split(" ")[0]}! 👋
+            Welcome back, {user.name.split(" ")[0]}! 👋
           </h1>
           <p className="text-muted-foreground">
             Here's what's happening with your career journey today.

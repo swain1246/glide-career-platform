@@ -11,6 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { X, Plus } from 'lucide-react';
+import { toast } from 'sonner';
+import { UpdateMentorSkills } from '@/api/mentor/mentorProfileService'; // Import the API service
 
 interface SkillsModalProps {
   isOpen: boolean;
@@ -73,14 +75,17 @@ export const SkillsModal: React.FC<SkillsModalProps> = ({
       // Log the data being sent for debugging
       console.log('Sending skills data:', skillsString);
       
-      // In a real app, you would call your API here
-      // const response = await UpdateMentorSkills(skillsString);
+      // Call the actual API
+      const response = await UpdateMentorSkills(skillsString);
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      onClose();
-      onUpdateSuccess();
+      if (response.success) {
+        toast.success("Skills updated successfully");
+        onClose();
+        onUpdateSuccess();
+      } else {
+        setError(response.message || "Failed to update skills");
+        toast.error(response.message || "Failed to update skills");
+      }
     } catch (err: any) {
       console.error('Error updating skills:', err);
       // Log more details about the error
@@ -89,7 +94,9 @@ export const SkillsModal: React.FC<SkillsModalProps> = ({
         console.error('Error response status:', err.response.status);
         console.error('Error response headers:', err.response.headers);
       }
-      setError(err.response?.data?.message || err.message || 'An error occurred while updating your skills');
+      const errorMessage = err.response?.data?.message || err.message || 'An error occurred while updating your skills';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

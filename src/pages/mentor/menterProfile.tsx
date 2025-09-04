@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Edit,
   Plus,
@@ -41,8 +41,13 @@ import { SkillsModal } from "@/components/models/mentor/SkillsModel";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-// Import the external modal
 import MentorTypeDetailsModal from "@/components/models/mentor/MentorTypeDetailsModal";
+import { toast } from "sonner";
+import { getMenterProfileData } from "@/api/mentor/mentorProfileService";
+import { GetProfileImage } from "@/api/userServices";
+import { ActiveInactiveMentorTypes } from "@/api/mentor/mentorProfileService";
+import { DeleteMentorEducation, DeleteMentorPerfessionalDetail } from "@/api/mentor/mentorProfileService"; // Import delete API services
+
 // Define proper types for education
 interface BaseEducation {
   id: string;
@@ -70,12 +75,15 @@ interface HigherEducation extends BaseEducation {
   endDate?: string;
 }
 type Education = SchoolEducation | HigherEducation;
+
 // Mentor type details interface
 interface MentorTypeDetails {
   active: boolean;
   preferredTime: string;
   skills: string[];
+  id?: number; // Added ID field to track mentor type ID
 }
+
 // Updated mentor data structure
 interface MentorData {
   name: string;
@@ -88,8 +96,8 @@ interface MentorData {
   location: string;
   bio: string;
   profileImage: string;
-  gender: string; // Added gender field
-  dateOfBirth: string; // Added date of birth field
+  gender: string;
+  dateOfBirth: string;
   mentorType: {
     skill: MentorTypeDetails;
     project: MentorTypeDetails;
@@ -98,25 +106,26 @@ interface MentorData {
   professionalExperience: any[];
   skills: string[];
 }
-// Demo data for mentor profile
-const demoMentorData: MentorData = {
-  name: "Dr. Sarah Johnson",
-  profileScore: 85,
-  company: "Tech Innovations Inc.",
-  designation: "Senior Software Architect",
-  yearsOfExperience: 12,
-  email: "sarah.johnson@techinnovations.com",
-  phone: "+1 (555) 123-4567",
-  location: "San Francisco, CA",
-  bio: "Passionate software architect with over a decade of experience in building scalable systems. I enjoy mentoring junior developers and sharing knowledge about modern software development practices. Specialized in cloud-native applications and microservices architecture.",
+
+// Default empty mentor data structure
+const defaultMentorData: MentorData = {
+  name: "",
+  profileScore: 0,
+  company: "",
+  designation: "",
+  yearsOfExperience: 0,
+  email: "",
+  phone: "",
+  location: "",
+  bio: "",
   profileImage: "",
-  gender: "Female", // Added gender
-  dateOfBirth: "June 15, 1980", // Added date of birth
+  gender: "",
+  dateOfBirth: "",
   mentorType: {
     skill: {
-      active: true,
-      preferredTime: "Weekdays 6 PM - 9 PM",
-      skills: ["Cloud Architecture", "Microservices", "System Design"],
+      active: false,
+      preferredTime: "",
+      skills: [],
     },
     project: {
       active: false,
@@ -124,115 +133,16 @@ const demoMentorData: MentorData = {
       skills: [],
     },
   },
-  education: [
-    {
-      id: "1",
-      level: "Ph.D. in Computer Science",
-      institution: "Stanford University",
-      year: "2010 - 2015",
-      grade: "Excellent",
-      courseName: "Computer Science",
-      specialization: "Distributed Systems",
-      startDate: "2010",
-      endDate: "2015",
-    } as HigherEducation,
-    {
-      id: "2",
-      level: "Master's in Computer Science",
-      institution: "MIT",
-      year: "2008 - 2010",
-      grade: "A+",
-      courseName: "Computer Science",
-      specialization: "Software Engineering",
-      startDate: "2008",
-      endDate: "2010",
-    } as HigherEducation,
-    {
-      id: "3",
-      level: "B.Tech in Computer Science",
-      institution: "IIT Delhi",
-      year: "2004 - 2008",
-      grade: "9.2 GPA",
-      courseName: "Computer Science",
-      startDate: "2004",
-      endDate: "2008",
-    } as HigherEducation,
-    {
-      id: "4",
-      level: "XII (12th Grade)",
-      institution: "ABC School",
-      year: "2004",
-      grade: "90%",
-      examinationBoard: "CBSE",
-      mediumOfStudy: "English",
-      passingYear: "2004",
-    } as SchoolEducation,
-  ],
-  professionalExperience: [
-    {
-      id: "1",
-      company: "Tech Innovations Inc.",
-      designation: "Senior Software Architect",
-      type: "fulltime" as const,
-      joiningDate: "Jan 2018",
-      currentlyWorking: true,
-      yearsOfExperience: 5,
-      areaOfExperience: [
-        "Cloud Architecture",
-        "Microservices",
-        "System Design",
-      ],
-      description:
-        "Leading the architecture team in designing scalable cloud solutions for enterprise clients.",
-    },
-    {
-      id: "2",
-      company: "Digital Solutions Ltd.",
-      designation: "Software Architect",
-      type: "fulltime" as const,
-      joiningDate: "Mar 2015",
-      currentlyWorking: false,
-      yearsOfExperience: 3,
-      areaOfExperience: ["Enterprise Architecture", "API Design", "DevOps"],
-      description:
-        "Designed and implemented microservices architecture for the company's flagship product.",
-    },
-    {
-      id: "3",
-      company: "NextGen Systems",
-      designation: "Senior Developer",
-      type: "fulltime" as const,
-      joiningDate: "Jun 2012",
-      currentlyWorking: false,
-      yearsOfExperience: 3,
-      areaOfExperience: [
-        "Backend Development",
-        "Database Design",
-        "Performance Optimization",
-      ],
-      description:
-        "Developed high-performance backend systems and optimized database queries.",
-    },
-  ],
-  skills: [
-    "Cloud Architecture",
-    "Microservices",
-    "System Design",
-    "AWS",
-    "Docker",
-    "Kubernetes",
-    "Java",
-    "Python",
-    "Node.js",
-    "React",
-    "MongoDB",
-    "PostgreSQL",
-  ],
+  education: [],
+  professionalExperience: [],
+  skills: [],
 };
+
 interface MentorProfileProps {
   mentor: MentorData;
   refreshMentorData: () => void;
 }
+
 // Confirmation Modal Component
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -243,6 +153,7 @@ interface ConfirmationModalProps {
   itemName?: string;
   isDeleting?: boolean;
 }
+
 const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   isOpen,
   onClose,
@@ -285,13 +196,16 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
     </Dialog>
   );
 };
+
 const MentorProfile: React.FC<MentorProfileProps> = ({
   mentor,
   refreshMentorData,
 }) => {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isEducationModalOpen, setIsEducationModalOpen] = useState(false);
-  const [selectedEducation, setSelectedEducation] = useState<Education | null>(null);
+  const [selectedEducation, setSelectedEducation] = useState<Education | null>(
+    null
+  );
   const [isProfessionalModalOpen, setIsProfessionalModalOpen] = useState(false);
   const [selectedProfessional, setSelectedProfessional] = useState<any>(null);
   const [isSkillsModalOpen, setIsSkillsModalOpen] = useState(false);
@@ -301,12 +215,17 @@ const MentorProfile: React.FC<MentorProfileProps> = ({
   // Mentor type states
   const [mentorTypeDetails, setMentorTypeDetails] = useState(mentor.mentorType);
   const [isMentorTypeModalOpen, setIsMentorTypeModalOpen] = useState(false);
-  const [currentMentorType, setCurrentMentorType] = useState<"skill" | "project">("skill");
+  const [currentMentorType, setCurrentMentorType] = useState<
+    "skill" | "project"
+  >("skill");
   
   // State for profile image
-  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(maleAvatar);
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState<boolean>(false);
   const [imageError, setImageError] = useState<string | null>(null);
+  
+  // loading state for mentor type toggle
+  const [isUpdatingMentorType, setIsUpdatingMentorType] = useState(false);
   
   // Delete confirmation state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -316,16 +235,50 @@ const MentorProfile: React.FC<MentorProfileProps> = ({
     name: string;
   } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Fetch profile image when mentor data changes
+  useEffect(() => {
+    const fetchProfileImage = async () => {
+      if (mentor.profileImage) {
+        try {
+          setImageLoading(true);
+          setImageError(null);
+          const imageBlob = await GetProfileImage(mentor.profileImage);
+          const imageUrl = URL.createObjectURL(imageBlob);
+          setProfileImageUrl(imageUrl);
+        } catch (error) {
+          console.error("Error fetching profile image:", error);
+          setImageError("Failed to load profile image");
+          toast.error("Failed to load profile image");
+          // Fallback to default avatar
+          setProfileImageUrl(maleAvatar);
+        } finally {
+          setImageLoading(false);
+        }
+      } else {
+        // Use default avatar if no profile image is set
+        setProfileImageUrl(maleAvatar);
+      }
+    };
+    fetchProfileImage();
+    // Cleanup function to revoke object URL
+    return () => {
+      if (profileImageUrl && profileImageUrl !== maleAvatar) {
+        URL.revokeObjectURL(profileImageUrl);
+      }
+    };
+  }, [mentor.profileImage]);
+  
   // Handle profile image update success
   const handleImageUpdateSuccess = () => {
-    // Toggle between male and female avatar for demo purposes
-    setProfileImageUrl((prev) => (prev === maleAvatar ? maleAvatar : maleAvatar));
     setIsProfileImageModalOpen(false);
     refreshMentorData();
   };
+  
   const handleEditProfile = () => {
     setIsProfileModalOpen(true);
   };
+  
   const getScoreColor = (score: number) => {
     if (score <= 40) {
       return {
@@ -347,6 +300,7 @@ const MentorProfile: React.FC<MentorProfileProps> = ({
       };
     }
   };
+  
   const ProfileImageWithScore = ({
     imageUrl,
     name,
@@ -412,22 +366,27 @@ const MentorProfile: React.FC<MentorProfileProps> = ({
       </div>
     );
   };
+  
   const handleEditEducation = (education: Education) => {
     setSelectedEducation(education);
     setIsEducationModalOpen(true);
   };
+  
   const handleAddEducation = () => {
     setSelectedEducation(null);
     setIsEducationModalOpen(true);
   };
+  
   const handleEditProfessional = (professional: any) => {
     setSelectedProfessional(professional);
     setIsProfessionalModalOpen(true);
   };
+  
   const handleAddProfessional = () => {
     setSelectedProfessional(null);
     setIsProfessionalModalOpen(true);
   };
+  
   // Delete handlers
   const handleDeleteClick = (type: string, id: string, name: string) => {
     setDeleteConfig({
@@ -437,67 +396,136 @@ const MentorProfile: React.FC<MentorProfileProps> = ({
     });
     setIsDeleteModalOpen(true);
   };
+  
   const handleDeleteConfirm = async () => {
     if (!deleteConfig) return;
     setIsDeleting(true);
-    // Simulate API call delay
-    setTimeout(() => {
+    
+    try {
+      let response;
+      
+      if (deleteConfig.type === "education") {
+        response = await DeleteMentorEducation(deleteConfig.id);
+      } else if (deleteConfig.type === "professional") {
+        response = await DeleteMentorPerfessionalDetail(deleteConfig.id);
+      } else {
+        throw new Error("Invalid delete type");
+      }
+      
+      if (response.success) {
+        toast.success(`${deleteConfig.type} deleted successfully`);
+        refreshMentorData();
+      } else {
+        toast.error(response.message || `Failed to delete ${deleteConfig.type}`);
+      }
+    } catch (error) {
+      console.error(`Error deleting ${deleteConfig.type}:`, error);
+      toast.error(`An error occurred while deleting the ${deleteConfig.type}`);
+    } finally {
       setIsDeleting(false);
       setIsDeleteModalOpen(false);
       setDeleteConfig(null);
-      refreshMentorData();
-    }, 1000);
+    }
   };
+  
   const isSchoolLevel = (level: string) => {
     return level === "X (10th Grade)" || level === "XII (12th Grade)";
   };
+  
   const getExistingEducationLevels = () => {
     return mentor.education.map((edu) => edu.level);
   };
-  // Handle mentor type toggle
-  const handleMentorTypeToggle = (type: "skill" | "project", active: boolean) => {
-    const updatedDetails = {
-      ...mentorTypeDetails,
-      [type]: {
-        ...mentorTypeDetails[type],
-        active,
-      }
-    };
-    setMentorTypeDetails(updatedDetails);
-    
-    // Always open modal when activating a mentor type
+  
+  // Handle mentor type toggle - FIXED VERSION
+  const handleMentorTypeToggle = async (
+    type: "skill" | "project",
+    active: boolean
+  ) => {
     if (active) {
+      // For activation, keep existing behavior
+      const updatedDetails = {
+        ...mentorTypeDetails,
+        [type]: {
+          ...mentorTypeDetails[type],
+          active,
+        },
+      };
+      setMentorTypeDetails(updatedDetails);
+      // Always open modal when activating a mentor type
       setCurrentMentorType(type);
       setIsMentorTypeModalOpen(true);
+    } else {
+      // For deactivation, use the API service
+      const mentorTypeId = mentorTypeDetails[type].id;
+      if (!mentorTypeId) {
+        toast.error("Mentor type ID is missing. Cannot deactivate.");
+        return;
+      }
+      setIsUpdatingMentorType(true);
+      try {
+        const response = await ActiveInactiveMentorTypes(mentorTypeId, 0); // 0 for inactive
+        if (response.success) {
+          // Update local state on success
+          const updatedDetails = {
+            ...mentorTypeDetails,
+            [type]: {
+              ...mentorTypeDetails[type],
+              active: false,
+            },
+          };
+          setMentorTypeDetails(updatedDetails);
+          toast.success(
+            `${
+              type === "skill" ? "Skill" : "Project"
+            } mentor type deactivated successfully`
+          );
+          // Refresh mentor data to get latest from server
+          refreshMentorData();
+        } else {
+          // Revert toggle on failure
+          toast.error(
+            response.message || `Failed to deactivate ${type} mentor type`
+          );
+        }
+      } catch (error) {
+        console.error(`Error deactivating ${type} mentor type:`, error);
+        toast.error(
+          `An error occurred while deactivating the ${type} mentor type`
+        );
+      } finally {
+        setIsUpdatingMentorType(false);
+      }
     }
-    
-    // Update mentor data
-    const updatedMentor = {
-      ...mentor,
-      mentorType: updatedDetails
-    };
-    refreshMentorData();
   };
+  
   // Handle opening details modal
   const handleOpenDetailsModal = (type: "skill" | "project") => {
     setCurrentMentorType(type);
     setIsMentorTypeModalOpen(true);
   };
-  // Handle details update
-  const handleDetailsUpdate = (type: "skill" | "project", details: MentorTypeDetails) => {
+  
+  // Handle details update - UPDATED to handle mentor type ID
+  const handleDetailsUpdate = (
+    type: "skill" | "project",
+    details: MentorTypeDetails
+  ) => {
     const updatedDetails = {
       ...mentorTypeDetails,
-      [type]: details
+      [type]: {
+        ...details,
+        // Preserve the ID if it exists
+        id: mentorTypeDetails[type].id || 0,
+      },
     };
     setMentorTypeDetails(updatedDetails);
-    
     // Update mentor data
     const updatedMentor = {
       ...mentor,
-      mentorType: updatedDetails
+      mentorType: updatedDetails,
     };
     refreshMentorData();
   };
+  
   return (
     <SidebarLayout>
       <div className="min-h-screen bg-background p-4 md:p-6 space-y-6 md:space-y-10">
@@ -513,7 +541,7 @@ const MentorProfile: React.FC<MentorProfileProps> = ({
                   onMouseLeave={() => setShowImageActions(false)}
                 >
                   <ProfileImageWithScore
-                    imageUrl={profileImageUrl}
+                    imageUrl={profileImageUrl || undefined}
                     name={mentor.name}
                     score={mentor.profileScore}
                   />
@@ -604,7 +632,9 @@ const MentorProfile: React.FC<MentorProfileProps> = ({
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                       <div>
-                        <p className="text-sm text-muted-foreground">Date of Birth</p>
+                        <p className="text-sm text-muted-foreground">
+                          Date of Birth
+                        </p>
                         <p className="font-medium">{mentor.dateOfBirth}</p>
                       </div>
                     </div>
@@ -644,10 +674,12 @@ const MentorProfile: React.FC<MentorProfileProps> = ({
                     </div>
                     <Switch
                       checked={mentorTypeDetails.skill.active}
-                      onCheckedChange={(checked) => handleMentorTypeToggle("skill", checked)}
+                      onCheckedChange={(checked) =>
+                        handleMentorTypeToggle("skill", checked)
+                      }
+                      disabled={isUpdatingMentorType}
                     />
                   </div>
-                  
                   {mentorTypeDetails.skill.active && (
                     <div className="mt-4 space-y-3">
                       <div>
@@ -660,19 +692,27 @@ const MentorProfile: React.FC<MentorProfileProps> = ({
                         <p className="text-sm font-medium">Skills</p>
                         {mentorTypeDetails.skill.skills.length > 0 ? (
                           <div className="flex flex-wrap gap-1 mt-1">
-                            {mentorTypeDetails.skill.skills.map((skill, index) => (
-                              <Badge key={index} variant="secondary" className="text-xs">
-                                {skill}
-                              </Badge>
-                            ))}
+                            {mentorTypeDetails.skill.skills.map(
+                              (skill, index) => (
+                                <Badge
+                                  key={index}
+                                  variant="secondary"
+                                  className="text-xs"
+                                >
+                                  {skill}
+                                </Badge>
+                              )
+                            )}
                           </div>
                         ) : (
-                          <p className="text-sm text-muted-foreground">No skills added</p>
+                          <p className="text-sm text-muted-foreground">
+                            No skills added
+                          </p>
                         )}
                       </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => handleOpenDetailsModal("skill")}
                         className="mt-2"
                       >
@@ -698,10 +738,12 @@ const MentorProfile: React.FC<MentorProfileProps> = ({
                     </div>
                     <Switch
                       checked={mentorTypeDetails.project.active}
-                      onCheckedChange={(checked) => handleMentorTypeToggle("project", checked)}
+                      onCheckedChange={(checked) =>
+                        handleMentorTypeToggle("project", checked)
+                      }
+                      disabled={isUpdatingMentorType}
                     />
                   </div>
-                  
                   {mentorTypeDetails.project.active && (
                     <div className="mt-4 space-y-3">
                       <div>
@@ -714,19 +756,27 @@ const MentorProfile: React.FC<MentorProfileProps> = ({
                         <p className="text-sm font-medium">Skills</p>
                         {mentorTypeDetails.project.skills.length > 0 ? (
                           <div className="flex flex-wrap gap-1 mt-1">
-                            {mentorTypeDetails.project.skills.map((skill, index) => (
-                              <Badge key={index} variant="secondary" className="text-xs">
-                                {skill}
-                              </Badge>
-                            ))}
+                            {mentorTypeDetails.project.skills.map(
+                              (skill, index) => (
+                                <Badge
+                                  key={index}
+                                  variant="secondary"
+                                  className="text-xs"
+                                >
+                                  {skill}
+                                </Badge>
+                              )
+                            )}
                           </div>
                         ) : (
-                          <p className="text-sm text-muted-foreground">No skills added</p>
+                          <p className="text-sm text-muted-foreground">
+                            No skills added
+                          </p>
                         )}
                       </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => handleOpenDetailsModal("project")}
                         className="mt-2"
                       >
@@ -790,15 +840,17 @@ const MentorProfile: React.FC<MentorProfileProps> = ({
                               : `${exp.yearsOfExperience} years`}
                           </p>
                           <div className="flex flex-wrap gap-1 mt-2">
-                            {exp.areaOfExperience.map((area, index) => (
-                              <Badge
-                                key={index}
-                                variant="secondary"
-                                className="text-xs"
-                              >
-                                {area}
-                              </Badge>
-                            ))}
+                            {exp.areaOfExperience.map(
+                              (area: string, index: number) => (
+                                <Badge
+                                  key={index}
+                                  variant="secondary"
+                                  className="text-xs"
+                                >
+                                  {area}
+                                </Badge>
+                              )
+                            )}
                           </div>
                           {exp.description && (
                             <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
@@ -846,6 +898,7 @@ const MentorProfile: React.FC<MentorProfileProps> = ({
                 )}
               </CardContent>
             </Card>
+            
             {/* Education Section */}
             <Card className="shadow-card hover:shadow-card-hover transition-all duration-300">
               <CardHeader className="flex flex-row items-center justify-between p-4 md:p-6">
@@ -984,6 +1037,7 @@ const MentorProfile: React.FC<MentorProfileProps> = ({
               </CardContent>
             </Card>
           </div>
+          
           {/* Skills Section */}
           <Card className="shadow-card hover:shadow-card-hover transition-all duration-300 mb-6 md:mb-8">
             <CardHeader className="flex flex-row items-center justify-between p-4 md:p-6">
@@ -1046,6 +1100,10 @@ const MentorProfile: React.FC<MentorProfileProps> = ({
           isOpen={isProfessionalModalOpen}
           onClose={() => setIsProfessionalModalOpen(false)}
           experience={selectedProfessional}
+          existingExperiences={mentor.professionalExperience.map((exp) => ({
+            id: exp.id,
+            currentlyWorking: exp.currentlyWorking,
+          }))}
           onUpdateSuccess={refreshMentorData}
         />
         
@@ -1092,16 +1150,230 @@ const MentorProfile: React.FC<MentorProfileProps> = ({
     </SidebarLayout>
   );
 };
-// Page component with demo data
+
+// Page component with API data
 const MentorProfilePage: React.FC = () => {
-  const [mentorData, setMentorData] = useState(demoMentorData);
-  const refreshMentorData = () => {
-    // In a real app, this would fetch fresh data from the API
-    // For demo purposes, we'll just keep the same data
-    console.log("Refreshing mentor data...");
+  const [mentorData, setMentorData] = useState<MentorData>(defaultMentorData);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  const refreshMentorData = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await getMenterProfileData();
+      
+      if (response.success) {
+        // Parse the data string
+        const parsedData = JSON.parse(response.data);
+        
+        // Transform the data to match our MentorData interface
+        const mentorProfileHero = parsedData.MentorProfileHero?.[0] || {};
+        const mentorSkills = parsedData.MentorSkills?.[0] || { Skills: "" };
+        const mentorEducation = parsedData.MentorEducation || [];
+        const mentorProfessionalDetails =
+          parsedData.MentorProfessionalDetails || [];
+        const mentorTypeDetails = parsedData.MentorTypeDetails || [];
+        const profileStrength =
+          parsedData.ProfileStrength?.ProfileStrength || 0;
+        
+        // Format date of birth
+        const formatDateOfBirth = (dateString: string) => {
+          if (!dateString) return "";
+          const date = new Date(dateString);
+          return date.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          });
+        };
+        
+        // Transform mentor type details
+        const transformMentorTypeDetails = () => {
+          const result: any = {
+            skill: {
+              active: false,
+              preferredTime: "",
+              skills: [],
+            },
+            project: {
+              active: false,
+              preferredTime: "",
+              skills: [],
+            },
+          };
+          
+          mentorTypeDetails.forEach((detail: any) => {
+            const type = detail.MentorType?.toLowerCase().includes("skill")
+              ? "skill"
+              : "project";
+            if (result[type]) {
+              result[type] = {
+                active: detail.IsActive || false,
+                preferredTime: detail.PreferredTime || "",
+                skills: detail.SkillsStacks
+                  ? detail.SkillsStacks.split(",").map((s: string) => s.trim())
+                  : [],
+                // Include the ID from the API response
+                id: detail.Id || 0,
+              };
+            }
+          });
+          
+          return result;
+        };
+        
+        // Transform education data
+        const transformEducation = (): Education[] => {
+          return mentorEducation.map((edu: any) => {
+            const isSchool =
+              edu.Qualification === "X (10th Grade)" ||
+              edu.Qualification === "XII (12th Grade)";
+            
+            if (isSchool) {
+              return {
+                id: edu.Id?.toString() || "",
+                level: edu.Qualification || "",
+                institution: edu.SchoolName || "",
+                year: edu.PassingYear?.toString() || "",
+                grade: `${edu.Percentage || 0}%`,
+                examinationBoard: edu.ExaminationBoard || "",
+                passingYear: edu.PassingYear?.toString() || "",
+              } as SchoolEducation;
+            } else {
+              // Format dates to show only year and month
+              const formatDate = (dateString: string) => {
+                if (!dateString) return "";
+                const date = new Date(dateString);
+                return `${date.getFullYear()}`;
+              };
+              
+              return {
+                id: edu.Id?.toString() || "",
+                level: edu.Qualification || "",
+                institution: edu.CollegeName || "",
+                year: `${formatDate(edu.StartDate)} - ${formatDate(
+                  edu.EndDate
+                )}`,
+                grade: edu.Percentage?.toString() || "",
+                courseName: edu.CourseName || "",
+                specialization: edu.Specialization || "",
+                startDate: formatDate(edu.StartDate),
+                endDate: formatDate(edu.EndDate),
+              } as HigherEducation;
+            }
+          });
+        };
+        
+        // Transform professional experience
+        const transformProfessionalExperience = () => {
+          return mentorProfessionalDetails.map((exp: any) => {
+            // Format joining date
+            const formatJoiningDate = (dateString: string) => {
+              if (!dateString) return "";
+              const date = new Date(dateString);
+              return date.toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "short",
+              });
+            };
+            
+            return {
+              id: exp.Id?.toString() || "",
+              company: exp.CompanyName || "",
+              designation: exp.Designation || "",
+              type: (exp.EmployementType || "")
+                .toLowerCase()
+                .replace("-", "") as any,
+              joiningDate: formatJoiningDate(exp.JoiningDate),
+              currentlyWorking: exp.CurrentlyWorking || false,
+              yearsOfExperience: exp.YearsOfExperience || 0,
+              areaOfExperience: exp.Skills
+                ? exp.Skills.split(",").map((s: string) => s.trim())
+                : [],
+              description: exp.Description || "",
+            };
+          });
+        };
+        
+        // Create the transformed mentor data
+        const transformedData: MentorData = {
+          name: mentorProfileHero.MentorName || "",
+          profileScore: profileStrength,
+          company: mentorProfileHero.CompanyName || "",
+          designation: mentorProfileHero.Designation || "",
+          yearsOfExperience: mentorProfileHero.ExperienceYears || 0,
+          email: mentorProfileHero.Email || "",
+          phone: mentorProfileHero.PhoneNumber || "",
+          location: mentorProfileHero.CurrentLocation || "",
+          bio: mentorProfileHero.Bio || "",
+          profileImage: mentorProfileHero.MentorProfileImage || "",
+          gender: mentorProfileHero.Gender || "",
+          dateOfBirth: formatDateOfBirth(mentorProfileHero.Dob || ""),
+          mentorType: transformMentorTypeDetails(),
+          education: transformEducation(),
+          professionalExperience: transformProfessionalExperience(),
+          skills: mentorSkills.Skills
+            ? mentorSkills.Skills.split(",").map((s: string) => s.trim())
+            : [],
+        };
+        
+        setMentorData(transformedData);
+      } else {
+        setError(response.message || "Failed to fetch mentor profile data");
+        toast.error(response.message || "Failed to fetch mentor profile data");
+      }
+    } catch (err: any) {
+      console.error("Error fetching mentor profile data:", err);
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        "An error occurred while fetching mentor profile data";
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
+  
+  useEffect(() => {
+    refreshMentorData();
+  }, []);
+  
+  if (isLoading) {
+    return (
+      <SidebarLayout>
+        <div className="min-h-screen bg-background p-4 md:p-6 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-muted-foreground">
+              Loading mentor profile...
+            </p>
+          </div>
+        </div>
+      </SidebarLayout>
+    );
+  }
+  
+  if (error) {
+    return (
+      <SidebarLayout>
+        <div className="min-h-screen bg-background p-4 md:p-6 flex items-center justify-center">
+          <div className="text-center max-w-md">
+            <div className="text-red-500 text-5xl mb-4">⚠️</div>
+            <h2 className="text-xl font-bold mb-2">Error Loading Profile</h2>
+            <p className="text-muted-foreground mb-6">{error}</p>
+            <Button onClick={refreshMentorData}>Try Again</Button>
+          </div>
+        </div>
+      </SidebarLayout>
+    );
+  }
+  
   return (
     <MentorProfile mentor={mentorData} refreshMentorData={refreshMentorData} />
   );
 };
+
 export default MentorProfilePage;

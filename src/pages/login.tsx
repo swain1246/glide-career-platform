@@ -12,7 +12,7 @@ import {
   CardTitle,
 } from "../components/ui/card";
 import { Separator } from "../components/ui/separator";
-import { useUser } from '../contexts/UserContext';
+import { useUser } from "../contexts/UserContext";
 import { loginUser } from "../api/authService";
 import { LoginRequest } from "../types/auth.types";
 import { useNavigate } from "react-router-dom";
@@ -36,60 +36,61 @@ const LoginPage = () => {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     const payload: LoginRequest = { email, password };
-    
+
     try {
       const response = await loginUser(payload);
-      
+
       // Determine user role and name based on userTypeId
       const roleMap: Record<number, UserRole> = {
         1: "admin",
         2: "company",
         3: "student",
-        4: "mentor"
+        4: "mentor",
       };
-      
+
       const nameMap: Record<number, string> = {
         1: response.data.adminName,
         2: response.data.companyName,
         3: response.data.studentName,
-        4: response.data.mentorName
+        4: response.data.mentorName,
       };
-      
+
       const userTypeId = response.data.userTypeId;
       const role = roleMap[userTypeId];
       const name = nameMap[userTypeId];
-      
+
       if (!role || !name) {
         throw new Error("Invalid user type");
       }
-      
+
       const userData: UserData = {
         role,
         name,
-        avatar: response.data.profileImage || null, // Use avatar from API if available
+        avatar: response.data.profileImage || null,
         notificationCount: response.data.notificationCount || 0,
       };
-      
+
+      // Ensure user is set before navigating
       updateUser(userData);
-      
+
       // Navigate to appropriate dashboard based on role
       const dashboardPaths: Record<UserRole, string> = {
         student: "/student/dashboard",
         company: "/company/dashboard",
         mentor: "/mentor/dashboard",
-        admin: "/admin/dashboard"
+        admin: "/admin/dashboard",
       };
-      
-      navigate(dashboardPaths[role]);
-      toast.success(`Welcome back, ${name}!`);
-      
+
+      // Add a small delay to ensure state is updated before navigation
+      setTimeout(() => {
+        navigate(dashboardPaths[role]);
+        toast.success(`Welcome back, ${name}!`);
+      }, 100);
     } catch (err: any) {
       console.error("Login Error:", err);
       const errorMessage = err?.response?.data?.message || "Login failed";
@@ -134,7 +135,7 @@ const LoginPage = () => {
           ))}
         </div>
       </div>
-      
+
       {/* Desktop Branding Section */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-hero items-center justify-center p-12">
         <div className="max-w-md text-center text-white">
@@ -159,7 +160,7 @@ const LoginPage = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Login Form Section */}
       <div className="flex-1 flex items-center justify-center p-4 lg:p-8 bg-white">
         <div className="w-full max-w-md space-y-8">
@@ -172,7 +173,7 @@ const LoginPage = () => {
               </a>
             </Button>
           </div>
-          
+
           {/* Login Form Card */}
           <Card className="bg-white border-0 shadow-lg">
             <CardHeader className="space-y-1 text-center pt-8 lg:pt-6">
@@ -188,7 +189,7 @@ const LoginPage = () => {
                 Enter your credentials to continue
               </CardDescription>
             </CardHeader>
-            
+
             <CardContent className="px-8 pb-6">
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="space-y-2">
@@ -205,7 +206,7 @@ const LoginPage = () => {
                     className="bg-gray-50 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="password" className="text-gray-700">
                     Password
@@ -235,7 +236,7 @@ const LoginPage = () => {
                     </Button>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center justify-between pt-2">
                   <Button
                     variant="link"
@@ -245,7 +246,7 @@ const LoginPage = () => {
                     <a href="/forgot-password">Forgot password?</a>
                   </Button>
                 </div>
-                
+
                 <Button
                   type="submit"
                   disabled={isLoading}
@@ -255,7 +256,7 @@ const LoginPage = () => {
                 </Button>
               </form>
             </CardContent>
-            
+
             <CardFooter className="flex flex-col space-y-4 px-8 pb-8">
               <Separator className="my-2" />
               <div className="text-sm text-center text-gray-600">

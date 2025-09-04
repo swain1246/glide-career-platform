@@ -29,14 +29,13 @@ interface UserProviderProps {
 export function UserProvider({ children }: UserProviderProps) {
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false); // Added auth state
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Initialize from localStorage on mount
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
-    const token = localStorage.getItem('token'); // Check for token
     
-    if (storedUser && token) {
+    if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);
@@ -44,7 +43,6 @@ export function UserProvider({ children }: UserProviderProps) {
       } catch (error) {
         console.error('Failed to parse user data from localStorage', error);
         localStorage.removeItem('user');
-        localStorage.removeItem('token'); // Also remove token if user data is invalid
       }
     }
     setLoading(false);
@@ -83,37 +81,8 @@ export function UserProvider({ children }: UserProviderProps) {
   const clearUser = () => {
     setUser(null);
     setIsAuthenticated(false);
-    localStorage.removeItem('token'); // Also remove token on logout
   };
-
-  const refreshNotifications = async () => {
-    if (!user || !isAuthenticated) return;
-    
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        console.error('No authentication token found');
-        return;
-      }
-      
-      const response = await fetch('/api/notifications', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch notifications');
-      }
-      
-      const data = await response.json();
-      updateUser({ notificationCount: data.count });
-    } catch (error) {
-      console.error('Failed to refresh notifications', error);
-      // If unauthorized, clear user and redirect to login
-      if (error instanceof Error && error.message.includes('401')) {
-        clearUser();
-      }
-    }
-  };
+  
 
   return (
     <UserContext.Provider value={{ 
@@ -121,7 +90,6 @@ export function UserProvider({ children }: UserProviderProps) {
       updateUser, 
       clearUser, 
       loading,
-      refreshNotifications,
       isAuthenticated // Added to context value
     }}>
       {children}

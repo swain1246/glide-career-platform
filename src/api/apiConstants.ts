@@ -44,8 +44,17 @@ export const ENDPOINTS = {
   DELETE_STUDENT_RESUME:"/Student/DeleteStudentResume",
 
   // mentor profile
-
+  
+  GET_MENTOR_PROFILE_DATA:"/mentor/GetMentorProfileDetails",
   UPDATE_MENTOR_PROFILE_HERO:"/mentor/UpdateMentorProfileHero",
+  ADD_UPDATE_MENTOR_TYPES:"/mentor/AddUpdateMentorTypes",
+  ACTIVE_INACTIVE_MENTOR_TYPES: "/mentor/ActiveInactiveMentorTypes",
+  ADD_UPDATE_MENTOR_EDUCATION: "/mentor/AddUpdateMentorEducation",
+  ADD_UPDATE_MENTOR_PROFESSIONAL_DETAILS: "/mentor/AddUpdateMentorPerfessionalDetails",
+  UPDATE_MENTOR_SKILLS: "/mentor/UpdateMentorSkills",
+
+  DELETE_MENTOR_EDUCATION: "/mentor/DeleteMentorEducation/{id}",
+  DELETE_MENTOR_PROFESSIONAL_DETAIL: "/mentor/DeleteMentorPerfessionalDetail/{id}",
 };
 
 

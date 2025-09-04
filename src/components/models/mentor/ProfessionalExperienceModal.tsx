@@ -17,7 +17,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { X } from 'lucide-react';
+import { X, AlertTriangle } from 'lucide-react';
+import { toast } from 'sonner';
+import { AddUpdateMentorProfessionalDetails } from '@/api/mentor/mentorProfileService';
 
 interface ProfessionalExperienceModalProps {
   isOpen: boolean;
@@ -33,13 +35,41 @@ interface ProfessionalExperienceModalProps {
     areaOfExperience: string[];
     description?: string;
   } | null;
+  existingExperiences?: Array<{
+    id: string;
+    currentlyWorking: boolean;
+  }>;
   onUpdateSuccess: () => void;
 }
+
+// Helper function to convert date format from "Jan 2023" to "2023-01"
+const convertDateForInput = (dateString: string) => {
+  if (!dateString) return '';
+  
+  // If the date is already in YYYY-MM format, return as is
+  if (/^\d{4}-\d{2}$/.test(dateString)) {
+    return dateString;
+  }
+  
+  // Parse the date string like "Jan 2023"
+  const parts = dateString.split(' ');
+  if (parts.length !== 2) return '';
+  
+  const month = parts[0];
+  const year = parts[1];
+  
+  // Convert month name to number (0-11)
+  const monthIndex = new Date(`${month} 1, ${year}`).getMonth();
+  
+  // Format as YYYY-MM
+  return `${year}-${(monthIndex + 1).toString().padStart(2, '0')}`;
+};
 
 export const ProfessionalExperienceModal: React.FC<ProfessionalExperienceModalProps> = ({
   isOpen,
   onClose,
   experience,
+  existingExperiences = [],
   onUpdateSuccess,
 }) => {
   // Initialize form state with default values
@@ -57,7 +87,7 @@ export const ProfessionalExperienceModal: React.FC<ProfessionalExperienceModalPr
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [newArea, setNewArea] = useState('');
-
+  
   // Reset form when modal opens or when experience prop changes
   useEffect(() => {
     if (isOpen) {
@@ -67,7 +97,8 @@ export const ProfessionalExperienceModal: React.FC<ProfessionalExperienceModalPr
           company: experience.company || '',
           designation: experience.designation || '',
           type: experience.type || 'fulltime',
-          joiningDate: experience.joiningDate || '',
+          // Convert the date format for the input field
+          joiningDate: convertDateForInput(experience.joiningDate),
           currentlyWorking: experience.currentlyWorking ?? true,
           yearsOfExperience: experience.yearsOfExperience?.toString() || '1',
           areaOfExperience: experience.areaOfExperience || [],
@@ -90,12 +121,12 @@ export const ProfessionalExperienceModal: React.FC<ProfessionalExperienceModalPr
       setError(null);
     }
   }, [isOpen, experience]);
-
+  
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (error) setError(null);
   };
-
+  
   const addAreaOfExperience = () => {
     if (newArea.trim() && !formData.areaOfExperience.includes(newArea.trim())) {
       setFormData(prev => ({
@@ -105,51 +136,67 @@ export const ProfessionalExperienceModal: React.FC<ProfessionalExperienceModalPr
       setNewArea('');
     }
   };
-
+  
   const removeAreaOfExperience = (area: string) => {
     setFormData(prev => ({
       ...prev,
       areaOfExperience: prev.areaOfExperience.filter(a => a !== area)
     }));
   };
-
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
     
+    // Check if there's already a currently working experience
+    if (formData.currentlyWorking) {
+      const hasCurrentWorkingExperience = existingExperiences.some(
+        exp => exp.currentlyWorking && exp.id !== experience?.id
+      );
+      
+      if (hasCurrentWorkingExperience) {
+        setError("You already have a 'Currently Working' experience. You can only have one current position at a time.");
+        setIsLoading(false);
+        return;
+      }
+    }
+    
     try {
-      // Prepare data for API
+      // Prepare data for API to match MentorProfessionEntity
       const updateData = {
-        company: formData.company,
+        id: experience ? parseInt(experience.id) : 0, // Pass 0 for add, actual ID for update
+        companyName: formData.company,
         designation: formData.designation,
-        type: formData.type,
-        joiningDate: formData.joiningDate,
-        currentlyWorking: formData.currentlyWorking,
+        employmentType: formData.type,
+        joiningDate: formData.joiningDate ? `${formData.joiningDate}-01` : '', // Format as YYYY-MM-01
+        currentlyWorking: formData.currentlyWorking ? 1 : 0, // Convert boolean to integer
         yearsOfExperience: parseInt(formData.yearsOfExperience),
-        areaOfExperience: formData.areaOfExperience,
-        description: formData.description,
+        skills: formData.areaOfExperience.join(','), // Convert array to comma-separated string
+        description: formData.description || null,
       };
       
-      // In a real app, you would call your API here
-      // const response = experience 
-      //   ? await UpdateMentorProfessionalExperience(experience.id, updateData)
-      //   : await AddMentorProfessionalExperience(updateData);
+      // Call the actual API
+      const response = await AddUpdateMentorProfessionalDetails(updateData);
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Close modal and notify parent to refresh data
-      onClose();
-      onUpdateSuccess();
+      if (response.success) {
+        toast.success(experience ? 'Professional experience updated successfully!' : 'Professional experience added successfully!');
+        onClose();
+        onUpdateSuccess();
+      } else {
+        setError(response.message || "Failed to save professional experience");
+        toast.error(response.message || "Failed to save professional experience");
+      }
     } catch (err: any) {
       console.error('Error saving professional experience:', err);
-      setError(err.response?.data?.message || 'An error occurred while saving your experience');
+      const errorMessage = err.response?.data?.message || err.message || 'An error occurred while saving your experience';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
-
+  
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
@@ -161,8 +208,9 @@ export const ProfessionalExperienceModal: React.FC<ProfessionalExperienceModalPr
         
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="bg-red-50 text-red-700 p-3 rounded-md">
-              {error}
+            <div className="bg-red-50 text-red-700 p-3 rounded-md flex items-start gap-2">
+              <AlertTriangle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+              <div>{error}</div>
             </div>
           )}
           

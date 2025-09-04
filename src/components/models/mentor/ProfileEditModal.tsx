@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { UpdateMentorProfileHero } from '@/api/mentor/mentorProfileService'; // Import the API service
+import { UpdateMentorProfileHero } from '@/api/mentor/mentorProfileService';
 
 interface ProfileEditModalProps {
   isOpen: boolean;
@@ -44,21 +44,61 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
   onUpdateSuccess,
 }) => {
   const [formData, setFormData] = useState({
-    firstName: mentor.name.split(' ')[0] || '',
-    lastName: mentor.name.split(' ').slice(1).join(' ') || '',
-    company: mentor.company,
-    designation: mentor.designation,
-    yearsOfExperience: mentor.yearsOfExperience.toString(),
-    email: mentor.email,
-    phoneNumber: mentor.phone,
-    location: mentor.location,
-    bio: mentor.bio,
-    gender: mentor.gender || '',
-    dateOfBirth: mentor.dateOfBirth || '',
+    firstName: '',
+    lastName: '',
+    company: '',
+    designation: '',
+    yearsOfExperience: '',
+    email: '',
+    phoneNumber: '',
+    location: '',
+    bio: '',
+    gender: '',
+    dateOfBirth: '', // This will be in YYYY-MM-DD format for the input
   });
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Format date from display format to YYYY-MM-DD for input field
+  const formatDateForInput = (dateString: string) => {
+    if (!dateString) return '';
+    
+    try {
+      // Try to parse the date string in various formats
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return '';
+      
+      // Format as YYYY-MM-DD
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      
+      return `${year}-${month}-${day}`;
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return '';
+    }
+  };
+
+  // Initialize form data when mentor prop changes or modal opens
+  useEffect(() => {
+    if (isOpen && mentor) {
+      setFormData({
+        firstName: mentor.name.split(' ')[0] || '',
+        lastName: mentor.name.split(' ').slice(1).join(' ') || '',
+        company: mentor.company,
+        designation: mentor.designation,
+        yearsOfExperience: mentor.yearsOfExperience.toString(),
+        email: mentor.email,
+        phoneNumber: mentor.phone,
+        location: mentor.location,
+        bio: mentor.bio,
+        gender: mentor.gender || '',
+        dateOfBirth: formatDateForInput(mentor.dateOfBirth),
+      });
+    }
+  }, [isOpen, mentor]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));

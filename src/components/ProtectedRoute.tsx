@@ -10,6 +10,7 @@ interface ProtectedRouteProps {
   redirectTo?: string;
 }
 
+// src/components/ProtectedRoute.tsx
 export function ProtectedRoute({ 
   children, 
   requiredRole, 
@@ -28,7 +29,6 @@ export function ProtectedRoute({
 
   // Redirect to login if not authenticated
   if (!user) {
-    debugger
     return <Navigate to={redirectTo} replace />;
   }
 
