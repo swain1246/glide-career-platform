@@ -21,6 +21,8 @@ import MentorProfilePage from "./pages/mentor/menterProfile";
 import Unauthorized from "./pages/Unauthorized";
 import { UserProvider } from "./contexts/UserContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import UserManagement from "./pages/admin/UserManagement";
+import UserSettings from "./pages/UserSettings";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +36,7 @@ const AppContent = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/jobs" element={<JobsPage />} />
       <Route path="/unauthorized" element={<Unauthorized />} />
+      <Route path="/userSetting" element={<UserSettings/>}/>
       
       {/* Student Routes */}
       <Route 
@@ -88,6 +91,8 @@ const AppContent = () => {
           </ProtectedRoute>
         } 
       />
+
+      <Route path="/admin/userManagement" element={<UserManagement/>}/>
       
       {/* Mentor Routes */}
       <Route 

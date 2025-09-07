@@ -1,6 +1,7 @@
 import axiosInstance from './axiosInstance';
 import { ENDPOINTS } from './apiConstants';
 import { AuthResponse } from '@/types/auth.types';
+import { apiResponse } from '@/types/api.types';
 
 export const UploadProfileImage = async (file: File) => {
   console.log("Uploading profile image:", file);
@@ -48,5 +49,15 @@ export const DeleteUserProfileImage = async () => {
     ENDPOINTS.DELETE_USER_PROFILE_IMAGE
   );
 
+  return response.data;
+};
+
+//Change Password of user account
+export const ChangePassword = async (data) => {
+  console.log("change-password request:", data);
+  const response = await axiosInstance.put<apiResponse>(
+    ENDPOINTS.CHANGE_PASSWORD,
+    data
+  );
   return response.data;
 };

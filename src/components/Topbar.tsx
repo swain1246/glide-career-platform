@@ -183,7 +183,7 @@ export function Topbar({
                 <Link to={`/${user.role}/profile`}>Profile</Link> 
               </DropdownMenuItem>
               <DropdownMenuItem className="text-foreground dark:text-gray-200 focus:bg-accent dark:focus:bg-gray-700">
-                Settings
+                <Link to={'/userSetting'}>Settings</Link> 
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-border dark:bg-gray-700" />
               <DropdownMenuItem 

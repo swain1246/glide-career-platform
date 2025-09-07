@@ -319,10 +319,6 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         
         <div className="flex-1 flex flex-col">
           <Topbar 
-            // userRole={user.role}
-            // userName={user.name}
-            // userAvatar={user.avatar}
-            // notificationCount={user.notificationCount || 0}
             onMenuClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
             isMobileMenuOpen={isMobileSidebarOpen}
           />

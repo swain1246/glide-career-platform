@@ -20,6 +20,8 @@ export const ENDPOINTS = {
   GET_PROFILE_IMAGE:"/user/GetProfileImage",
   DELETE_USER_PROFILE_IMAGE:"/user/DeleteUserProfileImage",
   GET_USER_DETAILS:"/user/GetUserDetails",
+  CHANGE_PASSWORD: "/user/ChangePassword",
+
 
   // Student Dashboard
 
@@ -55,6 +57,12 @@ export const ENDPOINTS = {
 
   DELETE_MENTOR_EDUCATION: "/mentor/DeleteMentorEducation/{id}",
   DELETE_MENTOR_PROFESSIONAL_DETAIL: "/mentor/DeleteMentorPerfessionalDetail/{id}",
+
+
+  // Admin
+
+  //User Management
+  GET_USERS_LIST: "/admin/GetUsersList",
 };
 
 
