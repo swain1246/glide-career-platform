@@ -14,7 +14,8 @@ import {
   Menu,
   X,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  ClipboardList
 } from "lucide-react";
 import { Topbar } from "../components/Topbar";
 import {
@@ -35,6 +36,7 @@ import { useLocation, Link } from "react-router-dom";
 import { cn } from "../lib/utils";
 import { useUser } from "../contexts/UserContext";
 import { UserRole } from "../contexts/UserContext";
+import { title } from "process";
 
 const navigationConfig = {
   student: [
@@ -44,15 +46,15 @@ const navigationConfig = {
         { title: "Dashboard", url: "/student/dashboard", icon: Home },
         { title: "Browse Jobs", url: "/jobs", icon: Briefcase },
         { title: "My Applications", url: "/student/applications", icon: FileText },
-        { title: "Find Mentors", url: "/student/mentors", icon: Users },
+        { title: "Mentorship", url: "/student/MentorshipManagement", icon: Users },
       ]
     },
     {
       label: "Profile",
       items: [
-        { title: "Edit Profile", url: "/student/edit-profile", icon: User },
+        { title: "Edit Profile", url: "/student/profile", icon: User },
         { title: "Skills & Resume", url: "/student/skills", icon: BookOpen },
-        { title: "Settings", url: "/student/settings", icon: Settings },
+        { title: "Settings", url: "/userSetting", icon: Settings },
       ]
     }
   ],
@@ -71,7 +73,7 @@ const navigationConfig = {
       items: [
         { title: "Company Profile", url: "/company/profile", icon: User },
         { title: "Analytics", url: "/company/analytics", icon: BarChart3 },
-        { title: "Settings", url: "/company/settings", icon: Settings },
+        { title: "Settings", url: "/userSetting", icon: Settings },
       ]
     }
   ],
@@ -89,7 +91,7 @@ const navigationConfig = {
       label: "Account",
       items: [
         { title: "Profile", url: "/mentor/profile", icon: User },
-        { title: "Availability", url: "/mentor/availability", icon: Settings },
+        { title: "Settings", url: "/userSetting", icon: Settings },
       ]
     }
   ],
@@ -98,9 +100,10 @@ const navigationConfig = {
       label: "Management",
       items: [
         { title: "Dashboard", url: "/admin/dashboard", icon: Home },
-        { title: "Users", url: "/admin/users", icon: Users },
+        { title: "Users", url: "/admin/userManagement", icon: Users },
         { title: "Companies", url: "/admin/companies", icon: Briefcase },
-        { title: "Mentors", url: "/admin/mentors", icon: Star },
+        { title: "Student Request", url: "/admin/MentorshipRequest", icon: ClipboardList },
+        {title: "Mentorship", url: "/admin/MentorshipManagement", icon: Users}
       ]
     },
     {
@@ -108,7 +111,7 @@ const navigationConfig = {
       items: [
         { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
         { title: "Security", url: "/admin/security", icon: Shield },
-        { title: "Settings", url: "/admin/settings", icon: Settings },
+        { title: "Settings", url: "/userSetting", icon: Settings },
       ]
     }
   ]

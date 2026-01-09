@@ -25,12 +25,12 @@ export const AddUpdateMentorTypes = async (data) => {
 };
 
 // ✅ Activate / Deactivate Mentor Types
-export const ActiveInactiveMentorTypes = async (id: number, isActive: number) => {
+export const ActiveInactiveMentorTypes = async (mentorType: string, isActive: number) => {
+  console.log("active_inactive_mentor_type:", { mentorType, isActive });
 
   const response = await axiosInstance.post<apiResponse>(
-    `${ENDPOINTS.ACTIVE_INACTIVE_MENTOR_TYPES}?Id=${id}&IsActive=${isActive}`
-  );
-
+  `${ENDPOINTS.ACTIVE_INACTIVE_MENTOR_TYPES}?MentorType=${mentorType}&IsActive=${isActive}`
+);
   return response.data;
 };
 
@@ -58,6 +58,17 @@ export const UpdateMentorSkills = async (skills: string) => {
   // since backend expects plain string (not object), send as query string
   const response = await axiosInstance.post<apiResponse>(
     `${ENDPOINTS.UPDATE_MENTOR_SKILLS}?Skills=${encodeURIComponent(skills)}`
+  );
+
+  return response.data;
+};
+
+// ✅ Delete Mentor Type Details
+export const DeleteMentorTypeDetails = async (id: number) => {
+  console.log("delete_mentor_type_details:", id);
+
+  const response = await axiosInstance.delete<apiResponse>(
+    ENDPOINTS.DELETE_MENTOR_TYPE_DETAILS.replace("{id}", id.toString())
   );
 
   return response.data;

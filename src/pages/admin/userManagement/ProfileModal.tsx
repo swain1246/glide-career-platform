@@ -18,6 +18,8 @@ import {
   Download,
   X,
 } from "lucide-react";
+import { GetViewProfileDetails } from "@/api/admin/UserManagement";
+import { GetProfileImage } from "@/api/userServices";
 
 // Types for student profile
 interface StudentEducation {
@@ -115,145 +117,137 @@ interface MentorProfile {
   skills: string[];
 }
 
-// Mock student data
-const mockStudentProfile: StudentProfile = {
-  id: "1",
-  name: "Sarah Johnson",
-  profileImage: "https://randomuser.me/api/portraits/women/1.jpg",
-  collegeName: "Stanford University",
-  courseName: "Computer Science",
-  gender: "Female",
-  dateOfBirth: "January 15, 2000",
-  email: "sarah.j@example.com",
-  phone: "+1 (555) 123-4567",
-  location: "Stanford, CA",
-  bio: "Passionate computer science student with a focus on artificial intelligence and machine learning. Eager to apply my skills to real-world problems and contribute to innovative projects.",
-  education: [
-    {
-      id: "1",
-      qualification: "XII (12th Grade)",
-      institution: "Lincoln High School",
-      examinationBoard: "State Board",
-      passingYear: "2018",
-      percentage: "92%",
-    },
-    {
-      id: "2",
-      qualification: "B.Tech",
-      institution: "Stanford University",
-      courseName: "Computer Science",
-      specialization: "Artificial Intelligence",
-      startYear: "2018",
-      endYear: "2022",
-      percentage: "85%",
-    },
-  ],
-  certifications: [
-    {
-      id: "1",
-      name: "AWS Certified Developer",
-      issuingOrganization: "Amazon Web Services",
-      certificateId: "AWS-DEV-2021",
-      issueDate: "June 15, 2021",
-      certificateUrl: "https://example.com/cert1",
-    },
-    {
-      id: "2",
-      name: "Google Data Analytics Certificate",
-      issuingOrganization: "Google",
-      issueDate: "March 10, 2022",
-      certificateUrl: "https://example.com/cert2",
-    },
-  ],
-  internships: [
-    {
-      id: "1",
-      companyName: "Tech Innovations Inc.",
-      role: "Software Engineering Intern",
-      duration: "3 months",
-      projectName: "AI-Powered Recommendation System",
-      skills: ["Python", "Machine Learning", "TensorFlow"],
-      projectUrl: "https://example.com/project1",
-      description: "Developed a recommendation system using collaborative filtering and content-based methods.",
-    },
-  ],
-  projects: [
-    {
-      id: "1",
-      name: "Smart Campus Navigation",
-      duration: "4 months",
-      description: "A mobile application that helps students navigate the campus using AR technology.",
-      skills: ["React Native", "Firebase", "AR.js"],
-      projectUrl: "https://example.com/project2",
-    },
-  ],
-  skills: ["Python", "Java", "JavaScript", "React", "Machine Learning", "Data Analysis"],
-  resume: {
-    fileName: "Sarah_Johnson_Resume.pdf",
-    uploadDate: "May 1, 2022",
-    url: "https://example.com/resume1",
-  },
-};
+// API Response Types
+interface StudentProfileResponse {
+  StudentsProfileHero: Array<{
+    UserId: number;
+    FirstName: string;
+    LastName: string;
+    StudentName: string;
+    Dob: string;
+    Gender: string;
+    College: string;
+    Degree: string;
+    RegistrationNo: string;
+    PhoneNo: string;
+    Email: string;
+    CurrentLocation: string;
+    ProfileSummary: string;
+    ProfileImagePath: string;
+  }>;
+  StudentEducation: Array<{
+    Id: number;
+    UserId: number;
+    Qualification: string;
+    ExaminationBoard: string;
+    SchoolName: string;
+    MediumOfStudy: string;
+    PassingYear: number;
+    CourseName: string;
+    Specialization: string;
+    CollegeName: string;
+    StartDate: string;
+    EndDate: string;
+    Percentage: number;
+  }>;
+  StudentResumeUrl: {
+    ResumeUrl: string;
+    ResumeUploadDate: string;
+  };
+  StudentSkills: Array<{
+    Skills: string;
+  }>;
+  StudentInternships: Array<{
+    Id: number;
+    UserId: number;
+    CompanyName: string;
+    Designation: string;
+    InternshipDuration: number;
+    ProjectName: string;
+    Description: string;
+    Skills: string;
+    ProjectUrl: string;
+  }>;
+  StudentCertifications: Array<{
+    Id: number;
+    UserId: number;
+    CertificationName: string;
+    CertificationId: string;
+    IssuedBy: string;
+    IssueDate: string;
+    CertificateUrl: string;
+  }>;
+  StudentProjects: Array<{
+    Id: number;
+    UserId: number;
+    ProjectName: string;
+    ProjectDuration: number;
+    Description: string;
+    Skills: string;
+    ProjectUrl: string;
+  }>;
+  ProfileStrength: {
+    ProfileStrength: number;
+  };
+}
 
-// Mock mentor data
-const mockMentorProfile: MentorProfile = {
-  id: "2",
-  name: "Michael Chen",
-  profileImage: "https://randomuser.me/api/portraits/men/2.jpg",
-  companyName: "Tech Innovations Inc.",
-  designation: "Senior Software Engineer",
-  gender: "Male",
-  dateOfBirth: "August 22, 1985",
-  email: "michael.c@example.com",
-  phone: "+1 (555) 987-6543",
-  location: "San Francisco, CA",
-  bio: "Experienced software engineer with over 10 years of experience in full-stack development and team leadership. Passionate about mentoring the next generation of developers.",
-  education: [
-    {
-      id: "1",
-      qualification: "B.S.",
-      institution: "MIT",
-      courseName: "Computer Science",
-      specialization: "Software Engineering",
-      startYear: "2003",
-      endYear: "2007",
-      percentage: "90%",
-    },
-    {
-      id: "2",
-      qualification: "M.S.",
-      institution: "Stanford University",
-      courseName: "Computer Science",
-      specialization: "Artificial Intelligence",
-      startYear: "2007",
-      endYear: "2009",
-      percentage: "88%",
-    },
-  ],
-  experience: [
-    {
-      id: "1",
-      companyName: "Tech Innovations Inc.",
-      designation: "Senior Software Engineer",
-      type: "Full-time",
-      joiningDate: "January 2015",
-      yearsOfExperience: 8,
-      skills: ["Java", "Spring", "React", "AWS", "Team Leadership"],
-      description: "Leading a team of 5 developers in building scalable web applications.",
-    },
-    {
-      id: "2",
-      companyName: "Global Solutions Ltd.",
-      designation: "Software Engineer",
-      type: "Full-time",
-      joiningDate: "June 2009",
-      yearsOfExperience: 6,
-      skills: ["C#", ".NET", "SQL Server", "JavaScript"],
-      description: "Developed and maintained enterprise-level applications for various clients.",
-    },
-  ],
-  skills: ["Java", "Spring", "React", "AWS", "Python", "Team Leadership", "Project Management"],
-};
+interface MentorProfileResponse {
+  MentorProfileHero: Array<{
+    Id: number;
+    UserId: number;
+    FirstName: string;
+    LastName: string;
+    MentorName: string;
+    Dob: string;
+    Gender: string;
+    PhoneNumber: string;
+    Email: string;
+    CompanyName: string;
+    Designation: string;
+    ExperienceYears: number;
+    CurrentLocation: string;
+    Bio: string;
+    MentorProfileImage: string;
+  }>;
+  MentorSkills: Array<{
+    Skills: string;
+  }>;
+  MentorEducation: Array<{
+    Id: number;
+    Qualification: string;
+    ExaminationBoard: string;
+    SchoolName: string;
+    PassingYear: number;
+    CourseName: string;
+    Specialization: string;
+    CollegeName: string;
+    StartDate: string;
+    EndDate: string;
+    Percentage: number;
+  }>;
+  MentorProfessionalDetails: Array<{
+    Id: number;
+    CompanyName: string;
+    Designation: string;
+    EmployementType: string;
+    JoiningDate: string;
+    CurrentlyWorking: boolean;
+    YearsOfExperience: number;
+    Skills: string;
+    Achievements: string;
+    Description: string;
+  }>;
+  MentorTypeDetails: Array<{
+    Id: number;
+    MentorType: string;
+    IsActive: boolean;
+    PreferredTime: string;
+    SkillsStacks: string;
+  }>;
+  ProfileStrength: {
+    ProfileStrength: number;
+  };
+}
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -264,17 +258,218 @@ interface ProfileModalProps {
 const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, userId }) => {
   const [userType, setUserType] = useState<"student" | "mentor">("student");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
+  const [mentorProfile, setMentorProfile] = useState<MentorProfile | null>(null);
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
+  const [imageLoading, setImageLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    // In a real app, fetch user data based on userId
-    // For now, we'll determine user type based on userId
-    if (userId === "1") {
-      setUserType("student");
-    } else if (userId === "2") {
-      setUserType("mentor");
-    }
-    setLoading(false);
-  }, [userId]);
+    const fetchProfileData = async () => {
+      if (!isOpen) return;
+      
+      setLoading(true);
+      setError(null);
+      setProfileImageUrl(null); // Reset image URL
+      
+      try {
+        // Fetch profile details
+        const response = await GetViewProfileDetails(parseInt(userId));
+        
+        if (response.success && response.data) {
+          // Parse the JSON string in the data field
+          const profileData = JSON.parse(response.data);
+          
+          // Determine if it's a student or mentor profile
+          if (profileData.StudentsProfileHero) {
+            // It's a student profile
+            const studentData: StudentProfileResponse = profileData;
+            setUserType("student");
+            
+            // First transform the data without the image
+            const transformedStudent = transformStudentData(studentData, userId, null);
+            setStudentProfile(transformedStudent);
+            
+            // Then fetch the profile image if available
+            if (studentData.StudentsProfileHero[0]?.ProfileImagePath) {
+              const fileName = studentData.StudentsProfileHero[0].ProfileImagePath|| '';
+              setImageLoading(true);
+              try {
+                const imageBlob = await GetProfileImage(fileName);
+                const imageUrl = URL.createObjectURL(imageBlob);
+                setProfileImageUrl(imageUrl);
+                
+                // Update the profile with the image URL
+                setStudentProfile(prev => prev ? {
+                  ...prev,
+                  profileImage: imageUrl
+                } : null);
+              } catch (imgError) {
+                console.error("Error fetching profile image:", imgError);
+                // Keep the profile without image if fetching fails
+              } finally {
+                setImageLoading(false);
+              }
+            }
+            
+          } else if (profileData.MentorProfileHero) {
+            // It's a mentor profile
+            const mentorData: MentorProfileResponse = profileData;
+            setUserType("mentor");
+            
+            // First transform the data without the image
+            const transformedMentor = transformMentorData(mentorData, userId, null);
+            setMentorProfile(transformedMentor);
+            
+            // Then fetch the profile image if available
+            if (mentorData.MentorProfileHero[0]?.MentorProfileImage) {
+              const fileName = mentorData.MentorProfileHero[0].MentorProfileImage || '';
+              setImageLoading(true);
+              try {
+                const imageBlob = await GetProfileImage(fileName);
+                const imageUrl = URL.createObjectURL(imageBlob);
+                setProfileImageUrl(imageUrl);
+                
+                // Update the profile with the image URL
+                setMentorProfile(prev => prev ? {
+                  ...prev,
+                  profileImage: imageUrl
+                } : null);
+              } catch (imgError) {
+                console.error("Error fetching profile image:", imgError);
+                // Keep the profile without image if fetching fails
+              } finally {
+                setImageLoading(false);
+              }
+            }
+          }
+        } else {
+          setError("Failed to fetch profile data");
+        }
+      } catch (err) {
+        console.error("Error fetching profile:", err);
+        setError("An error occurred while fetching profile data");
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchProfileData();
+  }, [isOpen, userId]);
+
+  // Clean up the object URL when the component unmounts or modal closes
+  useEffect(() => {
+    return () => {
+      if (profileImageUrl) {
+        URL.revokeObjectURL(profileImageUrl);
+      }
+    };
+  }, [profileImageUrl]);
+
+  // Transform student data from API format to component format
+  const transformStudentData = (data: StudentProfileResponse, userId: string, imageUrl: string | null): StudentProfile => {
+    const hero = data.StudentsProfileHero[0];
+    
+    return {
+      id: userId,
+      name: hero.StudentName,
+      profileImage: imageUrl || "", // Use the fetched image URL
+      collegeName: hero.College,
+      courseName: hero.Degree,
+      gender: hero.Gender,
+      dateOfBirth: new Date(hero.Dob).toLocaleDateString(),
+      email: hero.Email,
+      phone: hero.PhoneNo,
+      location: hero.CurrentLocation,
+      bio: hero.ProfileSummary,
+      education: data.StudentEducation.map(edu => ({
+        id: edu.Id.toString(),
+        qualification: edu.Qualification,
+        institution: edu.CollegeName || edu.SchoolName || "",
+        examinationBoard: edu.ExaminationBoard || undefined,
+        passingYear: edu.PassingYear ? edu.PassingYear.toString() : undefined,
+        courseName: edu.CourseName || undefined,
+        specialization: edu.Specialization || undefined,
+        startYear: edu.StartDate && edu.StartDate !== "1900-01-01" ? new Date(edu.StartDate).getFullYear().toString() : undefined,
+        endYear: edu.EndDate && edu.EndDate !== "1900-01-01" ? new Date(edu.EndDate).getFullYear().toString() : undefined,
+        percentage: `${edu.Percentage}%`
+      })),
+      certifications: data.StudentCertifications.map(cert => ({
+        id: cert.Id.toString(),
+        name: cert.CertificationName,
+        issuingOrganization: cert.IssuedBy,
+        certificateId: cert.CertificationId || undefined,
+        issueDate: new Date(cert.IssueDate).toLocaleDateString(),
+        certificateUrl: cert.CertificateUrl || undefined
+      })),
+      internships: data.StudentInternships.map(intern => ({
+        id: intern.Id.toString(),
+        companyName: intern.CompanyName,
+        role: intern.Designation,
+        duration: `${intern.InternshipDuration} months`,
+        projectName: intern.ProjectName,
+        skills: intern.Skills.split(',').map(skill => skill.trim()),
+        projectUrl: intern.ProjectUrl || undefined,
+        description: intern.Description
+      })),
+      projects: data.StudentProjects.map(proj => ({
+        id: proj.Id.toString(),
+        name: proj.ProjectName,
+        duration: `${proj.ProjectDuration} months`,
+        description: proj.Description,
+        skills: proj.Skills.split(',').map(skill => skill.trim()),
+        projectUrl: proj.ProjectUrl || undefined
+      })),
+      skills: data.StudentSkills.length > 0 ? data.StudentSkills[0].Skills.split(',').map(skill => skill.trim()) : [],
+      resume: {
+        fileName: data.StudentResumeUrl.ResumeUrl,
+        uploadDate: new Date(data.StudentResumeUrl.ResumeUploadDate).toLocaleDateString(),
+        url: data.StudentResumeUrl.ResumeUrl
+      }
+    };
+  };
+
+  // Transform mentor data from API format to component format
+  const transformMentorData = (data: MentorProfileResponse, userId: string, imageUrl: string | null): MentorProfile => {
+    const hero = data.MentorProfileHero[0];
+    
+    return {
+      id: userId,
+      name: hero.MentorName,
+      profileImage: imageUrl || "", // Use the fetched image URL
+      companyName: hero.CompanyName,
+      designation: hero.Designation,
+      gender: hero.Gender,
+      dateOfBirth: new Date(hero.Dob).toLocaleDateString(),
+      email: hero.Email,
+      phone: hero.PhoneNumber,
+      location: hero.CurrentLocation,
+      bio: hero.Bio,
+      education: data.MentorEducation.map(edu => ({
+        id: edu.Id.toString(),
+        qualification: edu.Qualification,
+        institution: edu.CollegeName || edu.SchoolName || "",
+        examinationBoard: edu.ExaminationBoard || undefined,
+        passingYear: edu.PassingYear ? edu.PassingYear.toString() : undefined,
+        courseName: edu.CourseName || undefined,
+        specialization: edu.Specialization || undefined,
+        startYear: edu.StartDate && edu.StartDate !== "0001-01-01" ? new Date(edu.StartDate).getFullYear().toString() : undefined,
+        endYear: edu.EndDate && edu.EndDate !== "0001-01-01" ? new Date(edu.EndDate).getFullYear().toString() : undefined,
+        percentage: `${edu.Percentage}%`
+      })),
+      experience: data.MentorProfessionalDetails.map(exp => ({
+        id: exp.Id.toString(),
+        companyName: exp.CompanyName,
+        designation: exp.Designation,
+        type: exp.EmployementType,
+        joiningDate: new Date(exp.JoiningDate).toLocaleDateString(),
+        yearsOfExperience: exp.YearsOfExperience,
+        skills: exp.Skills.split(',').map(skill => skill.trim()),
+        description: exp.Description
+      })),
+      skills: data.MentorSkills.length > 0 ? data.MentorSkills[0].Skills.split(',').map(skill => skill.trim()) : []
+    };
+  };
 
   if (loading) {
     return (
@@ -284,6 +479,21 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, userId }) 
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
               <p className="mt-4 text-muted-foreground">Loading profile...</p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  if (error) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <p className="text-red-500">Error: {error}</p>
+              <Button onClick={onClose} className="mt-4">Close</Button>
             </div>
           </div>
         </DialogContent>
@@ -305,10 +515,14 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, userId }) 
         
         {/* Profile Content */}
         <div className="p-4 md:p-6">
-          {userType === "student" ? (
-            <StudentProfileComponent profile={mockStudentProfile} />
+          {userType === "student" && studentProfile ? (
+            <StudentProfileComponent profile={studentProfile} imageLoading={imageLoading} />
+          ) : userType === "mentor" && mentorProfile ? (
+            <MentorProfileComponent profile={mentorProfile} imageLoading={imageLoading} />
           ) : (
-            <MentorProfileComponent profile={mockMentorProfile} />
+            <div className="text-center py-8">
+              <p>No profile data available</p>
+            </div>
           )}
         </div>
       </DialogContent>
@@ -317,7 +531,23 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, userId }) 
 };
 
 // Student Profile Component
-const StudentProfileComponent: React.FC<{ profile: StudentProfile }> = ({ profile }) => {
+interface StudentProfileComponentProps {
+  profile: StudentProfile;
+  imageLoading: boolean;
+}
+
+const StudentProfileComponent: React.FC<StudentProfileComponentProps> = ({ profile, imageLoading }) => {
+  // Get initials from name
+  const getInitials = (name: string) => {
+    const names = name.split(' ');
+    if (names.length >= 2) {
+      return names[0].charAt(0) + names[1].charAt(0);
+    } else if (names.length === 1) {
+      return names[0].charAt(0);
+    }
+    return '';
+  };
+
   return (
     <div className="space-y-6">
       {/* Profile Hero Section */}
@@ -325,12 +555,19 @@ const StudentProfileComponent: React.FC<{ profile: StudentProfile }> = ({ profil
         <div className="flex flex-col md:flex-row gap-4 md:gap-6">
           <div className="flex-shrink-0 flex justify-center">
             <Avatar className="h-20 w-20 md:h-24 md:w-24">
-              <AvatarImage src={profile.profileImage} alt={profile.name} />
-              <AvatarFallback className="text-xl md:text-2xl">
-                {profile.name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")}
+              {imageLoading ? (
+                <div className="w-full h-full flex items-center justify-center bg-muted">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                </div>
+              ) : (
+                <AvatarImage 
+                  src={profile.profileImage} 
+                  alt={profile.name} 
+                  className="object-cover"
+                />
+              )}
+              <AvatarFallback className="text-xl md:text-2xl bg-primary text-primary-foreground">
+                {getInitials(profile.name)}
               </AvatarFallback>
             </Avatar>
           </div>
@@ -387,7 +624,6 @@ const StudentProfileComponent: React.FC<{ profile: StudentProfile }> = ({ profil
           </div>
         </div>
       </div>
-
       {/* Tabs for different sections */}
       <Tabs defaultValue="education" className="w-full">
         <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 mb-4">
@@ -550,7 +786,23 @@ const StudentProfileComponent: React.FC<{ profile: StudentProfile }> = ({ profil
 };
 
 // Mentor Profile Component
-const MentorProfileComponent: React.FC<{ profile: MentorProfile }> = ({ profile }) => {
+interface MentorProfileComponentProps {
+  profile: MentorProfile;
+  imageLoading: boolean;
+}
+
+const MentorProfileComponent: React.FC<MentorProfileComponentProps> = ({ profile, imageLoading }) => {
+  // Get initials from name
+  const getInitials = (name: string) => {
+    const names = name.split(' ');
+    if (names.length >= 2) {
+      return names[0].charAt(0) + names[1].charAt(0);
+    } else if (names.length === 1) {
+      return names[0].charAt(0);
+    }
+    return '';
+  };
+
   return (
     <div className="space-y-6">
       {/* Profile Hero Section */}
@@ -558,12 +810,19 @@ const MentorProfileComponent: React.FC<{ profile: MentorProfile }> = ({ profile 
         <div className="flex flex-col md:flex-row gap-4 md:gap-6">
           <div className="flex-shrink-0 flex justify-center">
             <Avatar className="h-20 w-20 md:h-24 md:w-24">
-              <AvatarImage src={profile.profileImage} alt={profile.name} />
-              <AvatarFallback className="text-xl md:text-2xl">
-                {profile.name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")}
+              {imageLoading ? (
+                <div className="w-full h-full flex items-center justify-center bg-muted">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                </div>
+              ) : (
+                <AvatarImage 
+                  src={profile.profileImage} 
+                  alt={profile.name} 
+                  className="object-cover"
+                />
+              )}
+              <AvatarFallback className="text-xl md:text-2xl bg-primary text-primary-foreground">
+                {getInitials(profile.name)}
               </AvatarFallback>
             </Avatar>
           </div>
@@ -620,7 +879,6 @@ const MentorProfileComponent: React.FC<{ profile: MentorProfile }> = ({ profile 
           </div>
         </div>
       </div>
-
       {/* Tabs for different sections */}
       <Tabs defaultValue="education" className="w-full">
         <TabsList className="grid w-full grid-cols-3 mb-4">

@@ -20,3 +20,12 @@ export const GetUsersList = async (params: PaginationEntity) => {
 
   return response.data;
 };
+
+// ✅ Get User View Profile details
+export const GetViewProfileDetails = async (userId: number) => {
+  console.log("Fetching view profile details for userId:", userId);
+  const response = await axiosInstance.get<apiResponse>(
+    `${ENDPOINTS.GET_VIEW_PROFILE_DETAILS}?UserId=${userId}`
+  );
+  return response.data;
+};

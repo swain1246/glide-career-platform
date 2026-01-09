@@ -2,6 +2,7 @@
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://careerglide.onrender.com/api/';
 
 export const ENDPOINTS = {
+  // Auth 
   STUDENT_REGISTER: '/auth/StudentRegister',
   MENTOR_REGISTER: '/auth/MentorRegister',
   COMPANY_REGISTER: '/auth/CompanyRegister',
@@ -26,6 +27,11 @@ export const ENDPOINTS = {
   // Student Dashboard
 
   GET_STUDENT_DASHBOARD_DATA:'/student/GetStudentDashboardData',
+
+  // student Mentorship
+  GET_STUDENT_MENTORSHIP_REQUEST_LIST: "/student/GetStudentMentorshipRequestList",
+  ADD_UPDATE_MENTORSHIP_REQUEST: "/student/AddUpdateMentorshipRequest",
+  WITHDRAW_MENTORSHIP_REQUEST: "/student/WithdrawMentorshipRequest/{RequestId}",
 
 
   // student profile
@@ -55,6 +61,7 @@ export const ENDPOINTS = {
   ADD_UPDATE_MENTOR_PROFESSIONAL_DETAILS: "/mentor/AddUpdateMentorPerfessionalDetails",
   UPDATE_MENTOR_SKILLS: "/mentor/UpdateMentorSkills",
 
+  DELETE_MENTOR_TYPE_DETAILS: "/mentor/DeleteMentorTypeDetails/{id}",
   DELETE_MENTOR_EDUCATION: "/mentor/DeleteMentorEducation/{id}",
   DELETE_MENTOR_PROFESSIONAL_DETAIL: "/mentor/DeleteMentorPerfessionalDetail/{id}",
 
@@ -63,6 +70,18 @@ export const ENDPOINTS = {
 
   //User Management
   GET_USERS_LIST: "/admin/GetUsersList",
+  GET_VIEW_PROFILE_DETAILS: "/admin/GetViewProfileDetails",
+  
+  // Mentorship Requests
+  GET_STUDENT_MENTORSHIP_REQUESTS_COUNT: "/admin/GetStudentMentorshipRequestsCount",
+  GET_MENTORSHIP_REQUEST_LIST: "/admin/GetMentorshipRequestList",
+  ACCEPT_DENIE_UNDO_STUDENT_MENTORSHIP_REQUEST:"/admin/AcceptDenieUndoStudentMentorshipRequest",
+  VIEW_STUDENT_PROFILE_DETAILS: "/admin/ViewStudentProfileDetails",
+
+  // Common Apis Endoints
+
+  BIND_TECHNICAL_STACKS: "/common/BindTechnicalStacks",
+
 };
 
 
