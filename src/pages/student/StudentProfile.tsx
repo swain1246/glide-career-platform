@@ -25,7 +25,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import maleAvatar from '@/assets/avatars/male-1.png';
+import maleAvatar from "@/assets/avatars/male-1.png";
 import {
   Dialog,
   DialogContent,
@@ -46,6 +46,7 @@ import { ResumeUploadModal } from "@/components/models/student/ResumeUploadModal
 import ProfileImageModal from "@/components/models/ProfileImageModal"; // Import the new modal
 import { getStudentProfileData } from "@/api/studentServices";
 import { GetProfileImage } from "@/api/userServices";
+import { useUser } from "@/contexts/UserContext";
 import {
   DeleteStudentEducation,
   DeleteStudentCertification,
@@ -157,7 +158,11 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           <Button variant="outline" onClick={onClose} disabled={isDeleting}>
             Cancel
           </Button>
-          <Button variant="destructive" onClick={onConfirm} disabled={isDeleting}>
+          <Button
+            variant="destructive"
+            onClick={onConfirm}
+            disabled={isDeleting}
+          >
             {isDeleting ? "Deleting..." : "Delete"}
           </Button>
         </DialogFooter>
@@ -184,12 +189,12 @@ const StudentProfile: React.FC<StudentProfileProps> = ({
   const [isResumeModalOpen, setIsResumeModalOpen] = useState(false);
   const [isProfileImageModalOpen, setIsProfileImageModalOpen] = useState(false);
   const [showImageActions, setShowImageActions] = useState(false);
-  
+
   // State for profile image
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState<boolean>(false);
   const [imageError, setImageError] = useState<string | null>(null);
-  
+
   // Delete confirmation state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteConfig, setDeleteConfig] = useState<{
@@ -199,7 +204,7 @@ const StudentProfile: React.FC<StudentProfileProps> = ({
   } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  console.log(student)
+  console.log(student);
 
   // Fetch profile image when component mounts or when profileImage changes
   useEffect(() => {
@@ -208,10 +213,10 @@ const StudentProfile: React.FC<StudentProfileProps> = ({
         setProfileImageUrl(null);
         return;
       }
-      
+
       setImageLoading(true);
       setImageError(null);
-      
+
       try {
         const imageBlob = await GetProfileImage(student.profileImage);
         const imageUrl = URL.createObjectURL(imageBlob);
@@ -269,7 +274,7 @@ const StudentProfile: React.FC<StudentProfileProps> = ({
     const circumference = 2 * Math.PI * 40;
     const strokeDasharray = `${(score / 100) * circumference} ${circumference}`;
     const colors = getScoreColor(score);
-    
+
     return (
       <div className="relative w-40 h-40 md:w-40 md:h-40">
         <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100">
@@ -301,8 +306,8 @@ const StudentProfile: React.FC<StudentProfileProps> = ({
             </div>
           ) : (
             <Avatar className="w-full h-full">
-              <AvatarImage 
-                src={imageUrl || maleAvatar} 
+              <AvatarImage
+                src={imageUrl || maleAvatar}
                 alt={name}
                 onError={() => setImageError("Failed to load image")}
               />
@@ -374,7 +379,7 @@ const StudentProfile: React.FC<StudentProfileProps> = ({
     setIsDeleteModalOpen(true);
   };
 
-const handleDeleteConfirm = async () => {
+  const handleDeleteConfirm = async () => {
     if (!deleteConfig) return;
     setIsDeleting(true);
     try {
@@ -652,7 +657,9 @@ const handleDeleteConfirm = async () => {
                             variant="ghost"
                             size="sm"
                             className="h-8 w-8 p-0 text-destructive"
-                            onClick={() => handleDeleteClick("education", edu.id, edu.level)}
+                            onClick={() =>
+                              handleDeleteClick("education", edu.id, edu.level)
+                            }
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>
@@ -729,7 +736,13 @@ const handleDeleteConfirm = async () => {
                             variant="ghost"
                             size="sm"
                             className="h-8 w-8 p-0 text-destructive"
-                            onClick={() => handleDeleteClick("certification", cert.id, cert.name)}
+                            onClick={() =>
+                              handleDeleteClick(
+                                "certification",
+                                cert.id,
+                                cert.name
+                              )
+                            }
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>
@@ -819,7 +832,13 @@ const handleDeleteConfirm = async () => {
                             variant="ghost"
                             size="sm"
                             className="h-8 w-8 p-0 text-destructive"
-                            onClick={() => handleDeleteClick("internship", internship.id, internship.role)}
+                            onClick={() =>
+                              handleDeleteClick(
+                                "internship",
+                                internship.id,
+                                internship.role
+                              )
+                            }
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>
@@ -979,7 +998,13 @@ const handleDeleteConfirm = async () => {
                             variant="ghost"
                             size="sm"
                             className="h-8 w-8 p-0 text-destructive"
-                            onClick={() => handleDeleteClick("project", project.id, project.title)}
+                            onClick={() =>
+                              handleDeleteClick(
+                                "project",
+                                project.id,
+                                project.title
+                              )
+                            }
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>
@@ -1027,62 +1052,62 @@ const handleDeleteConfirm = async () => {
           </Card>
           {/* Resume Upload Section */}
           <Card className="shadow-card hover:shadow-card-hover transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between p-4 md:p-6">
-            <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
-              <Upload className="h-5 w-5" />
-              Resume
-            </CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsResumeModalOpen(true)}
-              className="flex items-center gap-2 h-9 md:h-8"
-            >
-              <Upload className="h-4 w-4" />
-              {student.resume ? "Update" : "Upload"}
-            </Button>
-          </CardHeader>
-          <CardContent className="p-4 md:p-6 pt-0 md:pt-0">
-            {student.resume !== null && student.resume !== undefined ? (
-              <div className="flex flex-col sm:flex-row items-center justify-between p-4 rounded-lg bg-muted/30 gap-4">
-                <div className="flex items-center gap-3">
-                  <FileText className="h-8 w-8 text-primary flex-shrink-0" />
-                  <div className="text-center sm:text-left">
-                    <p className="font-medium text-sm md:text-base">
-                      {student.resume.fileName.replace(/^\d+_/, "")}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Uploaded on {student.resume.uploadDate}
-                    </p>
+            <CardHeader className="flex flex-row items-center justify-between p-4 md:p-6">
+              <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
+                <Upload className="h-5 w-5" />
+                Resume
+              </CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsResumeModalOpen(true)}
+                className="flex items-center gap-2 h-9 md:h-8"
+              >
+                <Upload className="h-4 w-4" />
+                {student.resume ? "Update" : "Upload"}
+              </Button>
+            </CardHeader>
+            <CardContent className="p-4 md:p-6 pt-0 md:pt-0">
+              {student.resume !== null && student.resume !== undefined ? (
+                <div className="flex flex-col sm:flex-row items-center justify-between p-4 rounded-lg bg-muted/30 gap-4">
+                  <div className="flex items-center gap-3">
+                    <FileText className="h-8 w-8 text-primary flex-shrink-0" />
+                    <div className="text-center sm:text-left">
+                      <p className="font-medium text-sm md:text-base">
+                        {student.resume.fileName.replace(/^\d+_/, "")}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Uploaded on {student.resume.uploadDate}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" className="h-9">
+                      View
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-9 text-destructive"
+                      onClick={() => handleDeleteClick("resume", "0", "Resume")}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="h-9">
-                    View
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-9 text-destructive"
-                    onClick={() => handleDeleteClick("resume", "0", "Resume")}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+              ) : (
+                <div className="text-center py-6 md:py-8">
+                  <Upload className="h-10 w-10 md:h-12 md:w-12 text-muted-foreground mx-auto mb-3 md:mb-4" />
+                  <p className="text-muted-foreground text-sm md:text-base">
+                    No resume uploaded yet
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Upload your resume to increase your profile score
+                  </p>
                 </div>
-              </div>
-            ) : (
-              <div className="text-center py-6 md:py-8">
-                <Upload className="h-10 w-10 md:h-12 md:w-12 text-muted-foreground mx-auto mb-3 md:mb-4" />
-                <p className="text-muted-foreground text-sm md:text-base">
-                  No resume uploaded yet
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Upload your resume to increase your profile score
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              )}
+            </CardContent>
+          </Card>
         </div>
         {/* Modals */}
         <ProfileImageModal
@@ -1143,8 +1168,10 @@ const handleDeleteConfirm = async () => {
             setDeleteConfig(null);
           }}
           onConfirm={handleDeleteConfirm}
-          title={`Delete ${deleteConfig?.type || 'Item'}`}
-          message={`Are you sure you want to delete this ${deleteConfig?.type || 'item'}? This action cannot be undone.`}
+          title={`Delete ${deleteConfig?.type || "Item"}`}
+          message={`Are you sure you want to delete this ${
+            deleteConfig?.type || "item"
+          }? This action cannot be undone.`}
           itemName={deleteConfig?.name}
           isDeleting={isDeleting}
         />
@@ -1159,13 +1186,14 @@ const StudentProfilePage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  
+  const { refetchUser } = useUser();
+
   const fetchStudentData = async () => {
     try {
       setLoading(true);
       const response = await getStudentProfileData();
       const parsedData = JSON.parse(response.data);
-      
+
       const transformedData = {
         name: parsedData.StudentsProfileHero[0]?.StudentName || "",
         profileScore: parsedData.ProfileStrength?.ProfileStrength || 0,
@@ -1284,6 +1312,7 @@ const StudentProfilePage: React.FC = () => {
   }
 
   const refreshStudentData = () => {
+    refetchUser();
     setRefreshTrigger((prev) => prev + 1);
   };
 

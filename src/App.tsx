@@ -14,7 +14,6 @@ import NotFound from "./pages/NotFound";
 import CompanyDashboard from "./pages/company/dashboard";
 import PostJob from "./pages/company/post-job";
 import AdminDashboard from "./pages/admin/dashboard";
-import EditProfile from "./pages/student/edit-profile";
 import StudentProfilePage from "./pages/student/StudentProfile";
 import MentorDashboard from "./pages/mentor/dashboard";
 import MentorProfilePage from "./pages/mentor/menterProfile";
@@ -23,6 +22,11 @@ import { UserProvider } from "./contexts/UserContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import UserManagement from "./pages/admin/UserManagement";
 import UserSettings from "./pages/UserSettings";
+import MentorshipManagement from "./pages/student/MentorshipManagement";
+import MentorMentorshiPManagement from "./pages/mentor/MentorMentorshipManagement";
+import AdminMentorshipManagement from "./pages/admin/AdminMentorshipManagement";
+import MentorshipRequestManagement from "./pages/admin/MentorshipRequestManagement";
+import AdminProgramView from "./pages/admin/mentorshipProgram/AdminProgramView";
 
 const queryClient = new QueryClient();
 
@@ -36,82 +40,111 @@ const AppContent = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/jobs" element={<JobsPage />} />
       <Route path="/unauthorized" element={<Unauthorized />} />
-      <Route path="/userSetting" element={<UserSettings/>}/>
-      
+      <Route path="/userSetting" element={<UserSettings />} />
+      <Route
+        path="/mentor/MentorshipManagement"
+        element={<MentorMentorshiPManagement />}
+      />
+      <Route
+        path="/admin/MentorshipManagement"
+        element={<AdminMentorshipManagement />}
+      />
+      <Route
+        path="/admin/ProgramView/:id"
+        element={<AdminProgramView />}
+      />
+
       {/* Student Routes */}
-      <Route 
-        path="/student/dashboard" 
+      <Route
+        path="/student/dashboard"
         element={
           <ProtectedRoute requiredRole="student">
             <StudentDashboard />
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route 
-        path="/student/edit-profile" 
-        element={
-          <ProtectedRoute requiredRole="student">
-            <EditProfile />
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/student/profile" 
+      <Route
+        path="/student/profile"
         element={
           <ProtectedRoute requiredRole="student">
             <StudentProfilePage />
           </ProtectedRoute>
-        } 
+        }
       />
-      
+
+      <Route
+        path="/student/MentorshipManagement"
+        element={
+          <ProtectedRoute requiredRole="student">
+            <MentorshipManagement />
+          </ProtectedRoute>
+        }
+      />
+
       {/* Company Routes */}
-      <Route 
-        path="/company/dashboard" 
+      <Route
+        path="/company/dashboard"
         element={
           <ProtectedRoute requiredRole="company">
             <CompanyDashboard />
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route 
-        path="/company/postjob" 
+      <Route
+        path="/company/postjob"
         element={
           <ProtectedRoute requiredRole="company">
             <PostJob />
           </ProtectedRoute>
-        } 
+        }
       />
-      
+
       {/* Admin Routes */}
-      <Route 
-        path="/admin/dashboard" 
+      <Route
+        path="/admin/dashboard"
         element={
           <ProtectedRoute requiredRole="admin">
             <AdminDashboard />
           </ProtectedRoute>
-        } 
+        }
       />
 
-      <Route path="/admin/userManagement" element={<UserManagement/>}/>
-      
+      <Route
+        path="/admin/userManagement"
+        element={
+          <ProtectedRoute requiredRole="admin">
+            <UserManagement />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/MentorshipRequest"
+        element={
+          <ProtectedRoute requiredRole="admin">
+            <MentorshipRequestManagement />
+          </ProtectedRoute>
+        }
+      />
+
       {/* Mentor Routes */}
-      <Route 
-        path="/mentor/dashboard" 
+      <Route
+        path="/mentor/dashboard"
         element={
           <ProtectedRoute requiredRole="mentor">
             <MentorDashboard />
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route 
-        path="/mentor/profile" 
+      <Route
+        path="/mentor/profile"
         element={
           <ProtectedRoute requiredRole="mentor">
             <MentorProfilePage />
           </ProtectedRoute>
-        } 
+        }
       />
-      
+
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
     </Routes>

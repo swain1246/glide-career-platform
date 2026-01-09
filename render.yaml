@@ -1,10 +1,10 @@
 services:
   - type: web
-    name: glide-career-frontend
+    name: career-glide-frontend
     env: docker
     plan: free
     region: oregon
-    branch: main
+    branch: Development
     autoDeploy: true
     dockerfilePath: ./Dockerfile
     envVars:

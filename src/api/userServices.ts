@@ -18,10 +18,11 @@ export const UploadProfileImage = async (file: File) => {
   return response.data;
 };
 
-export const GetUserDetails = async (UserId) =>{
-  const response = await axiosInstance.get<AuthResponse>(ENDPOINTS.GET_USER_DETAILS+`/${UserId}`)
-  return response.data
-}
+// GAt user details
+export const GetUserDetails = async () => {
+  const response = await axiosInstance.get<apiResponse>(ENDPOINTS.GET_USER_DETAILS);
+  return response.data;
+};
 
 
 export const GetProfileImage = async (fileName: string): Promise<Blob> => {

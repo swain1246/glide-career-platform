@@ -1,3 +1,4 @@
+// src/pages/mentor/MentorProfilePage.tsx
 import React, { useState, useEffect } from "react";
 import {
   Edit,
@@ -41,12 +42,15 @@ import { SkillsModal } from "@/components/models/mentor/SkillsModel";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import MentorTypeDetailsModal from "@/components/models/mentor/MentorTypeDetailsModal";
+import MentorTypeSection from "./profile/MentorTypeSection";
 import { toast } from "sonner";
 import { getMenterProfileData } from "@/api/mentor/mentorProfileService";
 import { GetProfileImage } from "@/api/userServices";
-import { ActiveInactiveMentorTypes } from "@/api/mentor/mentorProfileService";
-import { DeleteMentorEducation, DeleteMentorPerfessionalDetail } from "@/api/mentor/mentorProfileService"; // Import delete API services
+import {
+  DeleteMentorEducation,
+  DeleteMentorPerfessionalDetail,
+} from "@/api/mentor/mentorProfileService";
+import { useUser } from "@/contexts/UserContext";
 
 // Define proper types for education
 interface BaseEducation {
@@ -77,11 +81,17 @@ interface HigherEducation extends BaseEducation {
 type Education = SchoolEducation | HigherEducation;
 
 // Mentor type details interface
+interface DomainStack {
+  id?: number;
+  domain: string;
+  stack: string;
+  domainId?: number;
+  stackId?: number;
+}
 interface MentorTypeDetails {
   active: boolean;
-  preferredTime: string;
-  skills: string[];
-  id?: number; // Added ID field to track mentor type ID
+  domains: DomainStack[];
+  id?: number;
 }
 
 // Updated mentor data structure
@@ -124,13 +134,11 @@ const defaultMentorData: MentorData = {
   mentorType: {
     skill: {
       active: false,
-      preferredTime: "",
-      skills: [],
+      domains: [],
     },
     project: {
       active: false,
-      preferredTime: "",
-      skills: [],
+      domains: [],
     },
   },
   education: [],
@@ -212,20 +220,10 @@ const MentorProfile: React.FC<MentorProfileProps> = ({
   const [isProfileImageModalOpen, setIsProfileImageModalOpen] = useState(false);
   const [showImageActions, setShowImageActions] = useState(false);
   
-  // Mentor type states
-  const [mentorTypeDetails, setMentorTypeDetails] = useState(mentor.mentorType);
-  const [isMentorTypeModalOpen, setIsMentorTypeModalOpen] = useState(false);
-  const [currentMentorType, setCurrentMentorType] = useState<
-    "skill" | "project"
-  >("skill");
-  
   // State for profile image
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState<boolean>(false);
   const [imageError, setImageError] = useState<string | null>(null);
-  
-  // loading state for mentor type toggle
-  const [isUpdatingMentorType, setIsUpdatingMentorType] = useState(false);
   
   // Delete confirmation state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -235,7 +233,7 @@ const MentorProfile: React.FC<MentorProfileProps> = ({
     name: string;
   } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  
+
   // Fetch profile image when mentor data changes
   useEffect(() => {
     const fetchProfileImage = async () => {
@@ -268,17 +266,17 @@ const MentorProfile: React.FC<MentorProfileProps> = ({
       }
     };
   }, [mentor.profileImage]);
-  
+
   // Handle profile image update success
   const handleImageUpdateSuccess = () => {
     setIsProfileImageModalOpen(false);
     refreshMentorData();
   };
-  
+
   const handleEditProfile = () => {
     setIsProfileModalOpen(true);
   };
-  
+
   const getScoreColor = (score: number) => {
     if (score <= 40) {
       return {
@@ -300,7 +298,7 @@ const MentorProfile: React.FC<MentorProfileProps> = ({
       };
     }
   };
-  
+
   const ProfileImageWithScore = ({
     imageUrl,
     name,
@@ -366,27 +364,43 @@ const MentorProfile: React.FC<MentorProfileProps> = ({
       </div>
     );
   };
-  
+
   const handleEditEducation = (education: Education) => {
     setSelectedEducation(education);
     setIsEducationModalOpen(true);
   };
-  
+
   const handleAddEducation = () => {
     setSelectedEducation(null);
     setIsEducationModalOpen(true);
   };
-  
+
   const handleEditProfessional = (professional: any) => {
     setSelectedProfessional(professional);
     setIsProfessionalModalOpen(true);
   };
-  
+
   const handleAddProfessional = () => {
     setSelectedProfessional(null);
     setIsProfessionalModalOpen(true);
   };
-  
+
+  // Handle mentor type updates
+  const handleMentorTypeUpdate = (type: "skill" | "project", details: MentorTypeDetails) => {
+    const updatedDetails = {
+      ...mentor.mentorType,
+      [type]: details,
+    };
+    
+    // Update mentor data
+    const updatedMentor = {
+      ...mentor,
+      mentorType: updatedDetails,
+    };
+    
+    refreshMentorData();
+  };
+
   // Delete handlers
   const handleDeleteClick = (type: string, id: string, name: string) => {
     setDeleteConfig({
@@ -396,11 +410,10 @@ const MentorProfile: React.FC<MentorProfileProps> = ({
     });
     setIsDeleteModalOpen(true);
   };
-  
+
   const handleDeleteConfirm = async () => {
     if (!deleteConfig) return;
     setIsDeleting(true);
-    
     try {
       let response;
       
@@ -413,119 +426,31 @@ const MentorProfile: React.FC<MentorProfileProps> = ({
       }
       
       if (response.success) {
-        toast.success(`${deleteConfig.type} deleted successfully`);
+        toast.success(`${deleteConfig.type.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())} deleted successfully`);
         refreshMentorData();
       } else {
-        toast.error(response.message || `Failed to delete ${deleteConfig.type}`);
+        toast.error(
+          response.message || `Failed to delete ${deleteConfig.type.replace(/([A-Z])/g, ' $1').toLowerCase()}`
+        );
       }
     } catch (error) {
       console.error(`Error deleting ${deleteConfig.type}:`, error);
-      toast.error(`An error occurred while deleting the ${deleteConfig.type}`);
+      toast.error(`An error occurred while deleting the ${deleteConfig.type.replace(/([A-Z])/g, ' $1').toLowerCase()}`);
     } finally {
       setIsDeleting(false);
       setIsDeleteModalOpen(false);
       setDeleteConfig(null);
     }
   };
-  
+
   const isSchoolLevel = (level: string) => {
     return level === "X (10th Grade)" || level === "XII (12th Grade)";
   };
-  
+
   const getExistingEducationLevels = () => {
     return mentor.education.map((edu) => edu.level);
   };
-  
-  // Handle mentor type toggle - FIXED VERSION
-  const handleMentorTypeToggle = async (
-    type: "skill" | "project",
-    active: boolean
-  ) => {
-    if (active) {
-      // For activation, keep existing behavior
-      const updatedDetails = {
-        ...mentorTypeDetails,
-        [type]: {
-          ...mentorTypeDetails[type],
-          active,
-        },
-      };
-      setMentorTypeDetails(updatedDetails);
-      // Always open modal when activating a mentor type
-      setCurrentMentorType(type);
-      setIsMentorTypeModalOpen(true);
-    } else {
-      // For deactivation, use the API service
-      const mentorTypeId = mentorTypeDetails[type].id;
-      if (!mentorTypeId) {
-        toast.error("Mentor type ID is missing. Cannot deactivate.");
-        return;
-      }
-      setIsUpdatingMentorType(true);
-      try {
-        const response = await ActiveInactiveMentorTypes(mentorTypeId, 0); // 0 for inactive
-        if (response.success) {
-          // Update local state on success
-          const updatedDetails = {
-            ...mentorTypeDetails,
-            [type]: {
-              ...mentorTypeDetails[type],
-              active: false,
-            },
-          };
-          setMentorTypeDetails(updatedDetails);
-          toast.success(
-            `${
-              type === "skill" ? "Skill" : "Project"
-            } mentor type deactivated successfully`
-          );
-          // Refresh mentor data to get latest from server
-          refreshMentorData();
-        } else {
-          // Revert toggle on failure
-          toast.error(
-            response.message || `Failed to deactivate ${type} mentor type`
-          );
-        }
-      } catch (error) {
-        console.error(`Error deactivating ${type} mentor type:`, error);
-        toast.error(
-          `An error occurred while deactivating the ${type} mentor type`
-        );
-      } finally {
-        setIsUpdatingMentorType(false);
-      }
-    }
-  };
-  
-  // Handle opening details modal
-  const handleOpenDetailsModal = (type: "skill" | "project") => {
-    setCurrentMentorType(type);
-    setIsMentorTypeModalOpen(true);
-  };
-  
-  // Handle details update - UPDATED to handle mentor type ID
-  const handleDetailsUpdate = (
-    type: "skill" | "project",
-    details: MentorTypeDetails
-  ) => {
-    const updatedDetails = {
-      ...mentorTypeDetails,
-      [type]: {
-        ...details,
-        // Preserve the ID if it exists
-        id: mentorTypeDetails[type].id || 0,
-      },
-    };
-    setMentorTypeDetails(updatedDetails);
-    // Update mentor data
-    const updatedMentor = {
-      ...mentor,
-      mentorType: updatedDetails,
-    };
-    refreshMentorData();
-  };
-  
+
   return (
     <SidebarLayout>
       <div className="min-h-screen bg-background p-4 md:p-6 space-y-6 md:space-y-10">
@@ -651,143 +576,12 @@ const MentorProfile: React.FC<MentorProfileProps> = ({
             </CardContent>
           </Card>
           
-          {/* Mentor Type Section - Updated */}
-          <Card className="shadow-card hover:shadow-card-hover transition-all duration-300 mb-6 md:mb-8">
-            <CardHeader className="p-4 md:p-6">
-              <CardTitle className="text-lg md:text-xl">Mentor Type</CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 md:p-6 pt-0 md:pt-0">
-              <div className="space-y-6">
-                {/* Skill Mentor Card */}
-                <div className="p-4 rounded-lg border border-border/50">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 rounded-lg bg-primary/10">
-                        <Code className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="font-medium">Skill Mentor</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Help students develop specific skills
-                        </p>
-                      </div>
-                    </div>
-                    <Switch
-                      checked={mentorTypeDetails.skill.active}
-                      onCheckedChange={(checked) =>
-                        handleMentorTypeToggle("skill", checked)
-                      }
-                      disabled={isUpdatingMentorType}
-                    />
-                  </div>
-                  {mentorTypeDetails.skill.active && (
-                    <div className="mt-4 space-y-3">
-                      <div>
-                        <p className="text-sm font-medium">Preferred Time</p>
-                        <p className="text-sm text-muted-foreground">
-                          {mentorTypeDetails.skill.preferredTime || "Not set"}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">Skills</p>
-                        {mentorTypeDetails.skill.skills.length > 0 ? (
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {mentorTypeDetails.skill.skills.map(
-                              (skill, index) => (
-                                <Badge
-                                  key={index}
-                                  variant="secondary"
-                                  className="text-xs"
-                                >
-                                  {skill}
-                                </Badge>
-                              )
-                            )}
-                          </div>
-                        ) : (
-                          <p className="text-sm text-muted-foreground">
-                            No skills added
-                          </p>
-                        )}
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleOpenDetailsModal("skill")}
-                        className="mt-2"
-                      >
-                        Edit Details
-                      </Button>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Project Mentor Card */}
-                <div className="p-4 rounded-lg border border-border/50">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 rounded-lg bg-primary/10">
-                        <Briefcase className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="font-medium">Project Mentor</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Guide students through projects
-                        </p>
-                      </div>
-                    </div>
-                    <Switch
-                      checked={mentorTypeDetails.project.active}
-                      onCheckedChange={(checked) =>
-                        handleMentorTypeToggle("project", checked)
-                      }
-                      disabled={isUpdatingMentorType}
-                    />
-                  </div>
-                  {mentorTypeDetails.project.active && (
-                    <div className="mt-4 space-y-3">
-                      <div>
-                        <p className="text-sm font-medium">Preferred Time</p>
-                        <p className="text-sm text-muted-foreground">
-                          {mentorTypeDetails.project.preferredTime || "Not set"}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">Skills</p>
-                        {mentorTypeDetails.project.skills.length > 0 ? (
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {mentorTypeDetails.project.skills.map(
-                              (skill, index) => (
-                                <Badge
-                                  key={index}
-                                  variant="secondary"
-                                  className="text-xs"
-                                >
-                                  {skill}
-                                </Badge>
-                              )
-                            )}
-                          </div>
-                        ) : (
-                          <p className="text-sm text-muted-foreground">
-                            No skills added
-                          </p>
-                        )}
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleOpenDetailsModal("project")}
-                        className="mt-2"
-                      >
-                        Edit Details
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Mentor Type Section - Now using the external component */}
+          <MentorTypeSection 
+            mentorType={mentor.mentorType}
+            onUpdateMentorType={handleMentorTypeUpdate}
+            refreshMentorData={refreshMentorData}
+          />
           
           {/* Content Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 mb-6 md:mb-8">
@@ -1088,14 +882,12 @@ const MentorProfile: React.FC<MentorProfileProps> = ({
           currentImage={mentor.profileImage || null}
           onUpdateSuccess={handleImageUpdateSuccess}
         />
-        
         <ProfileEditModal
           isOpen={isProfileModalOpen}
           onClose={() => setIsProfileModalOpen(false)}
           mentor={mentor}
           onUpdateSuccess={refreshMentorData}
         />
-        
         <ProfessionalExperienceModal
           isOpen={isProfessionalModalOpen}
           onClose={() => setIsProfessionalModalOpen(false)}
@@ -1106,7 +898,6 @@ const MentorProfile: React.FC<MentorProfileProps> = ({
           }))}
           onUpdateSuccess={refreshMentorData}
         />
-        
         <EducationModal
           isOpen={isEducationModalOpen}
           onClose={() => setIsEducationModalOpen(false)}
@@ -1114,21 +905,11 @@ const MentorProfile: React.FC<MentorProfileProps> = ({
           onUpdateSuccess={refreshMentorData}
           getExistingEducationLevels={getExistingEducationLevels}
         />
-        
         <SkillsModal
           isOpen={isSkillsModalOpen}
           onClose={() => setIsSkillsModalOpen(false)}
           currentSkills={mentor.skills}
           onUpdateSuccess={refreshMentorData}
-        />
-        
-        {/* External Mentor Type Details Modal */}
-        <MentorTypeDetailsModal
-          isOpen={isMentorTypeModalOpen}
-          onClose={() => setIsMentorTypeModalOpen(false)}
-          type={currentMentorType}
-          details={mentorTypeDetails[currentMentorType]}
-          onUpdateSuccess={handleDetailsUpdate}
         />
         
         {/* Delete Confirmation Modal */}
@@ -1155,19 +936,18 @@ const MentorProfile: React.FC<MentorProfileProps> = ({
 const MentorProfilePage: React.FC = () => {
   const [mentorData, setMentorData] = useState<MentorData>(defaultMentorData);
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const {refetchUser} = useUser();
   
-  const refreshMentorData = async () => {
+  const freshMentorData = async () => {
     setIsLoading(true);
     setError(null);
-    
     try {
       const response = await getMenterProfileData();
-      
       if (response.success) {
         // Parse the data string
         const parsedData = JSON.parse(response.data);
-        
         // Transform the data to match our MentorData interface
         const mentorProfileHero = parsedData.MentorProfileHero?.[0] || {};
         const mentorSkills = parsedData.MentorSkills?.[0] || { Skills: "" };
@@ -1189,48 +969,12 @@ const MentorProfilePage: React.FC = () => {
           });
         };
         
-        // Transform mentor type details
-        const transformMentorTypeDetails = () => {
-          const result: any = {
-            skill: {
-              active: false,
-              preferredTime: "",
-              skills: [],
-            },
-            project: {
-              active: false,
-              preferredTime: "",
-              skills: [],
-            },
-          };
-          
-          mentorTypeDetails.forEach((detail: any) => {
-            const type = detail.MentorType?.toLowerCase().includes("skill")
-              ? "skill"
-              : "project";
-            if (result[type]) {
-              result[type] = {
-                active: detail.IsActive || false,
-                preferredTime: detail.PreferredTime || "",
-                skills: detail.SkillsStacks
-                  ? detail.SkillsStacks.split(",").map((s: string) => s.trim())
-                  : [],
-                // Include the ID from the API response
-                id: detail.Id || 0,
-              };
-            }
-          });
-          
-          return result;
-        };
-        
         // Transform education data
         const transformEducation = (): Education[] => {
           return mentorEducation.map((edu: any) => {
             const isSchool =
               edu.Qualification === "X (10th Grade)" ||
               edu.Qualification === "XII (12th Grade)";
-            
             if (isSchool) {
               return {
                 id: edu.Id?.toString() || "",
@@ -1297,6 +1041,38 @@ const MentorProfilePage: React.FC = () => {
           });
         };
         
+        // Transform mentor type details
+        const transformMentorTypeDetails = () => {
+          const result = {
+            skill: {
+              active: false,
+              domains: [],
+            },
+            project: {
+              active: false,
+              domains: [],
+            },
+          };
+          
+          mentorTypeDetails.forEach((item: any) => {
+            const type = item.MentorType; // "skill" or "project"
+            if (type === 'skill' || type === 'project') {
+              result[type].active = item.IsActive;
+              
+              // Transform the stacks array
+              result[type].domains = item.stacks.map((stack: any) => ({
+                id: stack.Id,
+                domain: stack.DomainName,
+                stack: stack.StackName,
+                domainId: stack.DomainId,
+                stackId: stack.StackId
+              }));
+            }
+          });
+          
+          return result;
+        };
+        
         // Create the transformed mentor data
         const transformedData: MentorData = {
           name: mentorProfileHero.MentorName || "",
@@ -1338,8 +1114,13 @@ const MentorProfilePage: React.FC = () => {
   };
   
   useEffect(() => {
-    refreshMentorData();
-  }, []);
+    freshMentorData();
+  }, [refreshTrigger]);
+  
+  const refreshMentorData = () => {
+    refetchUser();
+    setRefreshTrigger((prev) => prev + 1);
+  };
   
   if (isLoading) {
     return (
@@ -1370,7 +1151,6 @@ const MentorProfilePage: React.FC = () => {
       </SidebarLayout>
     );
   }
-  
   return (
     <MentorProfile mentor={mentorData} refreshMentorData={refreshMentorData} />
   );
